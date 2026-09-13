@@ -1,12 +1,12 @@
 // ========================================================
-// SISTEMA DE AUDIO
+// MOTOR DE AUDIO (Web Audio API Retro)
 // ========================================================
 let soundEnabled = true;
-const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
 let audioCtx = null;
 
 function initAudio() {
-  if (!audioCtx) audioCtx = new AudioContextClass();
+  if (!audioCtx) audioCtx = new AudioCtx();
 }
 
 function playBeep(freq, type, duration) {
@@ -27,61 +27,65 @@ function playBeep(freq, type, duration) {
 }
 
 function playClick() { playBeep(520, 'square', 0.05); }
-function playLockSound() { playBeep(330, 'triangle', 0.08); }
 function playVictory() {
   if (!soundEnabled) return;
   const notes = [261.63, 329.63, 392.00, 523.25];
   notes.forEach((f, i) => setTimeout(() => playBeep(f, 'triangle', 0.18), i * 110));
 }
 
-function playPokemonCry(url) {
-  if (!soundEnabled || !url) return;
-  const audio = new Audio(url);
-  audio.volume = 0.5;
-  audio.play().catch(() => {});
-}
-
 // ========================================================
-// ROUTING Y NAVEGACIÓN (GENERADOR VS ARENA)
+// CAMBIO DE VISTA (Generador <-> Torre Batalla)
 // ========================================================
-const viewGenerator = document.getElementById('view-generator');
+const viewGen = document.getElementById('view-generator');
 const viewBattle = document.getElementById('view-battle');
+const navModeBtn = document.getElementById('nav-mode-btn');
 const navModeText = document.getElementById('nav-mode-text');
 
-function switchView(viewName) {
+function switchView(mode) {
   playClick();
-  if (viewName === 'battle') {
-    viewGenerator.classList.remove('active');
+  if (mode === 'battle') {
+    viewGen.classList.remove('active');
     viewBattle.classList.add('active');
     navModeText.innerText = 'Generador';
-    window.location.hash = 'battle';
-    initBattleArena();
+    window.location.hash = 'tower';
+    initTowerMatch();
   } else {
     viewBattle.classList.remove('active');
-    viewGenerator.classList.add('active');
-    navModeText.innerText = 'Arena Battle';
+    viewGen.classList.add('active');
+    navModeText.innerText = 'Torre Batalla';
     history.pushState("", document.title, window.location.pathname);
   }
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-document.getElementById('nav-battle-btn').addEventListener('click', () => {
-  const isBattleActive = viewBattle.classList.contains('active');
-  switchView(isBattleActive ? 'generator' : 'battle');
+navModeBtn.addEventListener('click', () => {
+  const isBattle = viewBattle.classList.contains('active');
+  switchView(isBattle ? 'generator' : 'battle');
 });
 
-document.getElementById('battle-launcher-tab').addEventListener('click', () => switchView('battle'));
-document.getElementById('back-to-gen-btn').addEventListener('click', () => switchView('generator'));
+document.getElementById('tower-back-btn').addEventListener('click', () => switchView('generator'));
 document.getElementById('brand-logo').addEventListener('click', () => switchView('generator'));
 
-// Soporte de enlace directo: #battle
-if (window.location.hash === '#battle') {
+if (window.location.hash === '#tower' || window.location.hash === '#battle') {
   switchView('battle');
 }
 
 // ========================================================
-// ARENA DE COMBATE
+// TORRE DE BATALLA 3 VS 3 (PROGRESIVA)
 // ========================================================
+let towerFloor = 1;
+let playerParty = [];
+let enemyParty = [];
+let pActiveIdx = 0;
+let eActiveIdx = 0;
+let battleBusy = false;
+
+const TOWER_RANKS = [
+  "RECLUTA ROCKET", "SOLDADO ROCKET", "LADRÓN NOCTURNO", "CIENTÍFICO LOCO",
+  "PILOTO ROCKET", "TENIENTE PETREL", "COMANDANTE PROTON", "EJECUTIVA ARIANA",
+  "ADMIN ARCHER", "LÍDER GIOVANNI"
+];
+
 const TYPE_CHART = {
   fire: { grass: 2, ice: 2, bug: 2, steel: 2, water: 0.5, fire: 0.5, rock: 0.5, dragon: 0.5 },
   water: { fire: 2, ground: 2, rock: 2, water: 0.5, grass: 0.5, dragon: 0.5 },
@@ -90,27 +94,24 @@ const TYPE_CHART = {
   normal: { rock: 0.5, steel: 0.5, ghost: 0 }
 };
 
-let bPlayer = null;
-let bEnemy = null;
-let bBusy = false;
-let battleReady = false;
-
-async function fetchBattleFighter() {
-  const id = Math.floor(Math.random() * 1020) + 1;
-  const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${id}`);
-  const data = await res.json();
-  const hp = data.stats[0].base_stat * 2 + 60;
-  const types = data.types.map(t => t.type.name);
+// Generar 1 Pokémon de combate
+async function fetchTowerPokemon(boostFloor = 1) {
+  const randId = Math.floor(Math.random() * 1020) + 1;
+  const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${randId}`);
+  const d = await res.json();
+  const hpBase = d.stats[0].base_stat * 2 + 50 + (boostFloor * 5);
+  const types = d.types.map(t => t.type.name);
 
   return {
-    name: data.name,
+    name: d.name,
+    gender: Math.random() > 0.5 ? '♂' : '♀',
     types: types,
-    maxHp: hp,
-    hp: hp,
-    atk: Math.max(data.stats[1].base_stat, data.stats[3].base_stat),
-    def: Math.max(data.stats[2].base_stat, data.stats[4].base_stat),
-    spe: data.stats[5].base_stat,
-    sprite: data.sprites.other['official-artwork'].front_default || data.sprites.front_default,
+    maxHp: hpBase,
+    hp: hpBase,
+    atk: Math.max(d.stats[1].base_stat, d.stats[3].base_stat) + (boostFloor * 2),
+    def: Math.max(d.stats[2].base_stat, d.stats[4].base_stat) + (boostFloor * 2),
+    spe: d.stats[5].base_stat,
+    sprite: d.sprites.other['official-artwork'].front_default || d.sprites.front_default,
     moves: [
       { name: `Golpe ${types[0]}`, type: types[0], power: 80 },
       { name: `Ráfaga ${types[1] || types[0]}`, type: types[1] || types[0], power: 85 },
@@ -120,157 +121,323 @@ async function fetchBattleFighter() {
   };
 }
 
-async function initBattleArena() {
-  if (battleReady && bPlayer && bPlayer.hp > 0 && bEnemy && bEnemy.hp > 0) return;
-  setBattleMsg('Convocando contendientes de la PokéAPI...');
-  disableBattleButtons(true);
+// Iniciar Combate en la Torre
+async function initTowerMatch(floor = 1) {
+  towerFloor = floor;
+  document.getElementById('tower-floor-txt').innerText = `PISO ${towerFloor} / 10`;
+  document.getElementById('tower-enemy-title').innerText = `RIVAL: ${TOWER_RANKS[Math.min(towerFloor - 1, TOWER_RANKS.length - 1)]}`;
+  setDialog(`¡Entrando al Piso ${towerFloor} de la Torre Rocket! Preparando combate 3 vs 3...`);
+  battleBusy = true;
 
   try {
-    const [p, e] = await Promise.all([fetchBattleFighter(), fetchBattleFighter()]);
-    bPlayer = p;
-    bEnemy = e;
-    battleReady = true;
+    // Si el jugador no tiene equipo o reinició, generamos 3 Pokémon para él
+    if (playerParty.length === 0 || floor === 1) {
+      playerParty = await Promise.all([fetchTowerPokemon(1), fetchTowerPokemon(1), fetchTowerPokemon(1)]);
+      pActiveIdx = 0;
+    } else {
+      // Curación leve de recompensa entre pisos (+30% vida)
+      playerParty.forEach(p => p.hp = Math.min(p.maxHp, p.hp + Math.floor(p.maxHp * 0.35)));
+      // Buscar primer pokemon vivo
+      pActiveIdx = playerParty.findIndex(p => p.hp > 0);
+      if (pActiveIdx === -1) pActiveIdx = 0;
+    }
 
-    renderFighterUI(bPlayer, 'player');
-    renderFighterUI(bEnemy, 'enemy');
-    renderBattleMoves();
+    // Equipo del rival escalado según el piso
+    enemyParty = await Promise.all([
+      fetchTowerPokemon(towerFloor),
+      fetchTowerPokemon(towerFloor),
+      fetchTowerPokemon(towerFloor)
+    ]);
+    eActiveIdx = 0;
 
-    setBattleMsg(`¡Un ${bEnemy.name.toUpperCase()} salvaje te desafía! ¿Qué hará ${bPlayer.name.toUpperCase()}?`);
-    disableBattleButtons(false);
-  } catch(err) {
-    setBattleMsg('Error de conexión. Pulsa "Nuevo Duelo Random".');
+    renderField();
+    updateBalls();
+    showCommandMenu('main');
+    setDialog(`¡El ${TOWER_RANKS[towerFloor - 1]} envía a ${enemyParty[eActiveIdx].name.toUpperCase()}!`);
+    battleBusy = false;
+  } catch(e) {
+    setDialog('Error de red al conectar con PokéAPI. Pulsa Reiniciar Torre.');
+    battleBusy = false;
   }
 }
 
-function renderFighterUI(poke, side) {
-  document.getElementById(`b-name-${side}`).innerText = poke.name.replace('-', ' ');
-  document.getElementById(`b-img-${side}`).src = poke.sprite;
-  updateBattleHpUI(side);
+function renderField() {
+  const p = playerParty[pActiveIdx];
+  const e = enemyParty[eActiveIdx];
+
+  // Jugador
+  document.getElementById('p-name').innerText = p.name;
+  document.getElementById('p-gender').innerText = p.gender;
+  document.getElementById('p-sprite').src = p.sprite;
+  updateHpBar('p', p);
+
+  // Rival
+  document.getElementById('e-name').innerText = e.name;
+  document.getElementById('e-gender').innerText = e.gender;
+  document.getElementById('e-sprite').src = e.sprite;
+  updateHpBar('e', e);
 }
 
-function updateBattleHpUI(side) {
-  const poke = side === 'player' ? bPlayer : bEnemy;
+function updateHpBar(side, poke) {
   const pct = Math.max(0, Math.min(100, (poke.hp / poke.maxHp) * 100));
-  const bar = document.getElementById(`b-bar-${side}`);
-  const txt = document.getElementById(`b-txt-${side}`);
-
+  const bar = document.getElementById(`${side}-hp-bar`);
   bar.style.width = pct + '%';
-  txt.innerText = `${Math.max(0, poke.hp)} / ${poke.maxHp}`;
 
-  if (pct > 50) bar.style.backgroundColor = 'var(--accent-green)';
-  else if (pct > 20) bar.style.backgroundColor = 'var(--accent-yellow)';
-  else bar.style.backgroundColor = 'var(--rocket-red)';
+  if (side === 'p') {
+    document.getElementById('p-hp-current').innerText = Math.max(0, poke.hp);
+    document.getElementById('p-hp-max').innerText = poke.maxHp;
+  }
+
+  if (pct > 50) bar.style.backgroundColor = '#22C55E';
+  else if (pct > 20) bar.style.backgroundColor = '#F59E0B';
+  else bar.style.backgroundColor = '#E11D48';
 }
 
-function renderBattleMoves() {
-  const grid = document.getElementById('b-attacks-grid');
-  grid.innerHTML = '';
+function updateBalls() {
+  const pBalls = document.querySelectorAll('#p-party-balls .pkball');
+  playerParty.forEach((p, i) => {
+    if (p.hp <= 0) pBalls[i].classList.add('fainted');
+    else pBalls[i].classList.remove('fainted');
+  });
 
-  bPlayer.moves.forEach((m, idx) => {
-    const btn = document.createElement('button');
-    btn.className = 'atk-btn';
-    btn.innerHTML = `
-      <div class="atk-name">${m.name}</div>
-      <div class="atk-meta">
-        <span>Potencia: ${m.power}</span>
-        <span class="atk-tag t-${m.type}">${m.type}</span>
-      </div>
-    `;
-    btn.onclick = () => executeBattleTurn(idx);
-    grid.appendChild(btn);
+  const eBalls = document.querySelectorAll('#e-party-balls .pkball');
+  enemyParty.forEach((e, i) => {
+    if (e.hp <= 0) eBalls[i].classList.add('fainted');
+    else eBalls[i].classList.remove('fainted');
   });
 }
 
-function setBattleMsg(txt) { document.getElementById('b-console').innerText = txt; }
-function disableBattleButtons(val) {
-  document.querySelectorAll('#b-attacks-grid .atk-btn').forEach(b => b.disabled = val);
+function setDialog(txt) {
+  document.getElementById('battle-dialog-txt').innerText = txt;
 }
 
-function calcCombatDmg(attacker, defender, move) {
-  let mult = 1;
-  if (TYPE_CHART[move.type] && TYPE_CHART[move.type][defender.types[0]]) {
-    mult = TYPE_CHART[move.type][defender.types[0]];
+// Menús de la consola
+const menuCommands = document.getElementById('menu-commands');
+const menuMoves = document.getElementById('menu-moves');
+const menuParty = document.getElementById('menu-party-switch');
+
+function showCommandMenu(which) {
+  menuCommands.style.display = 'none';
+  menuMoves.style.display = 'none';
+  menuParty.style.display = 'none';
+
+  if (which === 'main') menuCommands.style.display = 'grid';
+  if (which === 'moves') {
+    renderMovesButtons();
+    menuMoves.style.display = 'block';
   }
-  const base = Math.floor((((2 * 50 / 5 + 2) * move.power * (attacker.atk / defender.def)) / 50) + 2);
-  const dmg = Math.floor(base * mult * (Math.random() * (1 - 0.85) + 0.85));
-  return { dmg: Math.max(1, dmg), mult: mult };
+  if (which === 'party') {
+    renderPartySwitchList();
+    menuParty.style.display = 'block';
+  }
 }
 
-async function executeBattleTurn(moveIdx) {
-  if (bBusy || bPlayer.hp <= 0 || bEnemy.hp <= 0) return;
-  bBusy = true;
-  disableBattleButtons(true);
+// Botones del menú principal
+document.getElementById('cmd-fight-btn').addEventListener('click', () => {
+  if (battleBusy) return;
+  playClick();
+  showCommandMenu('moves');
+});
 
-  const pMove = bPlayer.moves[moveIdx];
-  const eMove = bEnemy.moves[Math.floor(Math.random() * bEnemy.moves.length)];
-  const playerFirst = bPlayer.spe >= bEnemy.spe;
+document.getElementById('cmd-poke-btn').addEventListener('click', () => {
+  if (battleBusy) return;
+  playClick();
+  showCommandMenu('party');
+});
+
+document.getElementById('cmd-bag-btn').addEventListener('click', () => {
+  playClick();
+  setDialog('¡La bolsa está bloqueada bajo las reglas de la Torre Rocket!');
+});
+
+document.getElementById('cmd-run-btn').addEventListener('click', () => {
+  playClick();
+  setDialog('¡No puedes huir de un combate oficial en la Torre Rocket!');
+});
+
+document.getElementById('cmd-back-move').addEventListener('click', () => { playClick(); showCommandMenu('main'); });
+document.getElementById('cmd-back-party').addEventListener('click', () => { playClick(); showCommandMenu('main'); });
+
+// Render ataques
+function renderMovesButtons() {
+  const p = playerParty[pActiveIdx];
+  const container = document.getElementById('moves-slots-container');
+  container.innerHTML = '';
+
+  p.moves.forEach((m, idx) => {
+    const btn = document.createElement('button');
+    btn.className = 'atk-sub-btn';
+    btn.innerHTML = `
+      <div class="atk-sub-name">${m.name}</div>
+      <div class="atk-sub-meta">
+        <span>POT ${m.power}</span>
+        <span style="text-transform:uppercase;">${m.type}</span>
+      </div>
+    `;
+    btn.onclick = () => doTowerTurn(idx);
+    container.appendChild(btn);
+  });
+}
+
+// Render lista de cambio
+function renderPartySwitchList() {
+  const container = document.getElementById('party-switch-container');
+  container.innerHTML = '';
+
+  playerParty.forEach((poke, idx) => {
+    const row = document.createElement('div');
+    row.className = `switch-poke-row ${poke.hp <= 0 ? 'fainted' : ''}`;
+    row.innerHTML = `
+      <span>${idx === pActiveIdx ? '▶ ' : ''}${poke.name.toUpperCase()}</span>
+      <span>${Math.max(0, poke.hp)}/${poke.maxHp} HP</span>
+    `;
+    if (poke.hp > 0 && idx !== pActiveIdx) {
+      row.onclick = () => switchPlayerPokemon(idx);
+    }
+    container.appendChild(row);
+  });
+}
+
+async function switchPlayerPokemon(newIdx) {
+  playClick();
+  battleBusy = true;
+  showCommandMenu('main');
+  pActiveIdx = newIdx;
+  setDialog(`¡Adelante ${playerParty[pActiveIdx].name.toUpperCase()}!`);
+  renderField();
+  await sleep(900);
+
+  // El enemigo aprovecha el turno de cambio para atacar
+  const enemy = enemyParty[eActiveIdx];
+  const eMove = enemy.moves[Math.floor(Math.random() * enemy.moves.length)];
+  await attackStep(enemy, playerParty[pActiveIdx], eMove, 'e', 'p');
+  
+  checkFaintStatus();
+  battleBusy = false;
+}
+
+// Turno de Pelea
+async function doTowerTurn(moveIdx) {
+  if (battleBusy) return;
+  battleBusy = true;
+  showCommandMenu('main');
+
+  const p = playerParty[pActiveIdx];
+  const e = enemyParty[eActiveIdx];
+  const pMove = p.moves[moveIdx];
+  const eMove = e.moves[Math.floor(Math.random() * e.moves.length)];
+
+  const playerFirst = p.spe >= e.spe;
 
   if (playerFirst) {
-    await battleStrike(bPlayer, bEnemy, pMove, 'player', 'enemy');
-    if (bEnemy.hp > 0) {
-      await sleep(850);
-      await battleStrike(bEnemy, bPlayer, eMove, 'enemy', 'player');
+    await attackStep(p, e, pMove, 'p', 'e');
+    if (e.hp > 0) {
+      await sleep(800);
+      await attackStep(e, p, eMove, 'e', 'p');
     }
   } else {
-    await battleStrike(bEnemy, bPlayer, eMove, 'enemy', 'player');
-    if (bPlayer.hp > 0) {
-      await sleep(850);
-      await battleStrike(bPlayer, bEnemy, pMove, 'player', 'enemy');
+    await attackStep(e, p, eMove, 'e', 'p');
+    if (p.hp > 0) {
+      await sleep(800);
+      await attackStep(p, e, pMove, 'p', 'e');
     }
   }
 
-  if (bPlayer.hp > 0 && bEnemy.hp > 0) {
-    disableBattleButtons(false);
-    bBusy = false;
-  } else {
-    endDuel();
-  }
+  checkFaintStatus();
+  battleBusy = false;
 }
 
-async function battleStrike(atk, def, move, atkSide, defSide) {
-  setBattleMsg(`¡${atk.name.toUpperCase()} usó ${move.name.toUpperCase()}!`);
+async function attackStep(atk, def, move, atkSide, defSide) {
+  setDialog(`¡${atk.name.toUpperCase()} usó ${move.name.toUpperCase()}!`);
 
-  const imgAtk = document.getElementById(`b-img-${atkSide}`);
-  imgAtk.classList.add(atkSide === 'player' ? 'anim-atk-p' : 'anim-atk-e');
-  setTimeout(() => imgAtk.classList.remove('anim-atk-p', 'anim-atk-e'), 300);
+  const spriteAtk = document.getElementById(`${atkSide}-sprite`);
+  spriteAtk.classList.add(atkSide === 'p' ? 'anim-atk-p' : 'anim-atk-e');
+  setTimeout(() => spriteAtk.classList.remove('anim-atk-p', 'anim-atk-e'), 300);
 
   await sleep(350);
 
-  const res = calcCombatDmg(atk, def, move);
-  def.hp -= res.dmg;
-
-  const imgDef = document.getElementById(`b-img-${defSide}`);
-  imgDef.classList.add('anim-shake');
-  setTimeout(() => imgDef.classList.remove('anim-shake'), 350);
-
-  updateBattleHpUI(defSide);
-
-  if (res.mult > 1) { playBeep(650, 'square', 0.2); setBattleMsg(`¡Es súper eficaz! Infligió ${res.dmg} de daño.`); }
-  else if (res.mult < 1 && res.mult > 0) { playBeep(200, 'sawtooth', 0.1); setBattleMsg(`No es muy eficaz... Infligió ${res.dmg} de daño.`); }
-  else { playBeep(200, 'sawtooth', 0.1); setBattleMsg(`Infligió ${res.dmg} puntos de daño.`); }
-}
-
-function endDuel() {
-  if (bPlayer.hp <= 0) {
-    playBeep(120, 'triangle', 0.4);
-    setBattleMsg(`¡${bPlayer.name.toUpperCase()} cayó debilitado! Has sido derrotado.`);
-  } else if (bEnemy.hp <= 0) {
-    playVictory();
-    setBattleMsg(`¡${bEnemy.name.toUpperCase()} enemigo derrotado! ¡Victoria para el Escuadrón!`);
+  let mult = 1;
+  if (TYPE_CHART[move.type] && TYPE_CHART[move.type][def.types[0]]) {
+    mult = TYPE_CHART[move.type][def.types[0]];
   }
-  bBusy = false;
-  battleReady = false;
+
+  const base = Math.floor((((2 * 50 / 5 + 2) * move.power * (atk.atk / def.def)) / 50) + 2);
+  const dmg = Math.max(1, Math.floor(base * mult * (Math.random() * 0.15 + 0.85)));
+
+  def.hp -= dmg;
+
+  const spriteDef = document.getElementById(`${defSide}-sprite`);
+  spriteDef.classList.add('anim-shake');
+  setTimeout(() => spriteDef.classList.remove('anim-shake'), 350);
+
+  updateHpBar(defSide, def);
+
+  if (mult > 1) { playBeep(650, 'square', 0.2); setDialog(`¡Es súper eficaz! Infligió ${dmg} de daño.`); }
+  else if (mult < 1 && mult > 0) { playBeep(200, 'sawtooth', 0.1); setDialog(`No es muy eficaz... Infligió ${dmg} de daño.`); }
+  else { playBeep(200, 'sawtooth', 0.1); setDialog(`Causó ${dmg} de daño.`); }
+  await sleep(700);
 }
 
-document.getElementById('battle-duel-reload').addEventListener('click', () => {
-  battleReady = false;
-  initBattleArena();
+// Verificación de K.O. y Avance de Piso
+async function checkFaintStatus() {
+  updateBalls();
+  const p = playerParty[pActiveIdx];
+  const e = enemyParty[eActiveIdx];
+
+  // K.O. Enemigo
+  if (e.hp <= 0) {
+    playBeep(120, 'triangle', 0.3);
+    setDialog(`¡El ${e.name.toUpperCase()} rival se debilitó!`);
+    await sleep(900);
+
+    eActiveIdx++;
+    if (eActiveIdx < enemyParty.length) {
+      // Siguiente Pokémon enemigo
+      setDialog(`¡El rival envía a su siguiente Pokémon: ${enemyParty[eActiveIdx].name.toUpperCase()}!`);
+      renderField();
+      updateBalls();
+    } else {
+      // PISO SUPERADO
+      playVictory();
+      if (towerFloor >= 10) {
+        setDialog('¡VICTORIA TOTAL! ¡Has conquistado los 10 pisos de la Torre y derrotado a Giovanni!');
+      } else {
+        setDialog(`¡PISO ${towerFloor} SUPERADO! Subiendo al siguiente piso...`);
+        await sleep(1500);
+        initTowerMatch(towerFloor + 1);
+      }
+      return;
+    }
+  }
+
+  // K.O. Jugador
+  if (p.hp <= 0) {
+    playBeep(100, 'sawtooth', 0.4);
+    setDialog(`¡${p.name.toUpperCase()} se debilitó!`);
+    await sleep(900);
+
+    const nextAlive = playerParty.findIndex(poke => poke.hp > 0);
+    if (nextAlive !== -1) {
+      pActiveIdx = nextAlive;
+      setDialog(`¡Adelante ${playerParty[pActiveIdx].name.toUpperCase()}!`);
+      renderField();
+      updateBalls();
+    } else {
+      setDialog(`¡Todo tu equipo ha sido derrotado! Fin del asalto en el Piso ${towerFloor}.`);
+    }
+  }
+}
+
+document.getElementById('tower-restart-btn').addEventListener('click', () => {
+  playClick();
+  playerParty = [];
+  initTowerMatch(1);
 });
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 // ========================================================
-// MOTOR DEL GENERADOR DE EQUIPOS
+// GENERADOR DE EQUIPOS (OPTIMIZACIÓN INSTANTÁNEA)
 // ========================================================
 let teamSlots = Array(6).fill(null).map(() => ({ data: null, locked: false }));
 const GENERATIONS = {
@@ -283,27 +450,6 @@ const GENERATIONS = {
 let activeGens = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 let forceShiny = false;
 
-const TYPE_WEAKNESSES = {
-  normal: ['fighting'], fire: ['water', 'ground', 'rock'], water: ['electric', 'grass'],
-  grass: ['fire', 'ice', 'poison', 'flying', 'bug'], electric: ['ground'], ice: ['fire', 'fighting', 'rock', 'steel'],
-  fighting: ['flying', 'psychic', 'fairy'], poison: ['ground', 'psychic'], ground: ['water', 'grass', 'ice'],
-  flying: ['electric', 'ice', 'rock'], psychic: ['bug', 'ghost', 'dark'], bug: ['fire', 'flying', 'rock'],
-  rock: ['water', 'grass', 'fighting', 'ground', 'steel'], ghost: ['ghost', 'dark'], dragon: ['ice', 'dragon', 'fairy'],
-  steel: ['fire', 'fighting', 'ground'], fairy: ['poison', 'steel'], dark: ['fighting', 'bug', 'fairy']
-};
-
-const MISSION_NAMES = [
-  "OPERACIÓN: SOMBRA KANTO", "MISIÓN: FURIA NOCTURNA", "PROTOCOLO: ASALTO JOHTO",
-  "OPERACIÓN: CÓDIGO GIOVANNI", "ESCUADRÓN: TRUENO NEGRO", "MISIÓN: RELÁMPAGO ROJO"
-];
-
-function showToast(msg) {
-  const toast = document.getElementById('toast');
-  document.getElementById('toast-msg').innerText = msg;
-  toast.classList.add('show');
-  setTimeout(() => toast.classList.remove('show'), 2500);
-}
-
 const genContainer = document.getElementById('gen-container');
 Object.keys(GENERATIONS).forEach(gKey => {
   const g = GENERATIONS[gKey];
@@ -313,12 +459,9 @@ Object.keys(GENERATIONS).forEach(gKey => {
   lbl.addEventListener('change', (e) => {
     playClick();
     const v = parseInt(gKey);
-    if (e.target.checked) { activeGens.push(v); lbl.classList.add('active'); }
-    else {
-      if (activeGens.length <= 1) { e.target.checked = true; return; }
-      activeGens = activeGens.filter(x => x !== v);
-      lbl.classList.remove('active');
-    }
+    if (e.target.checked) activeGens.push(v);
+    else activeGens = activeGens.filter(x => x !== v);
+    lbl.classList.toggle('active', e.target.checked);
   });
   genContainer.appendChild(lbl);
 });
@@ -330,182 +473,130 @@ document.getElementById('shiny-toggle').addEventListener('change', (e) => {
   renderTeam();
 });
 
-function getAvailablePool() {
-  let pool = [];
-  const lockedIds = teamSlots.filter(s => s.locked && s.data).map(s => s.data.id);
-  activeGens.forEach(g => {
-    for (let i = GENERATIONS[g].start; i <= GENERATIONS[g].end; i++) {
-      if (!lockedIds.includes(i)) pool.push(i);
-    }
-  });
-  return pool;
-}
-
-async function fetchPoke(id) {
-  const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${id}`);
-  return await res.json();
-}
-
-window.rerollSlot = async function(index) {
-  playClick();
-  const pool = getAvailablePool();
-  if (!pool.length) return;
-  const randId = pool[Math.floor(Math.random() * pool.length)];
-  try {
-    teamSlots[index].data = await fetchPoke(randId);
-    renderTeam();
-    updateTacticalRadar();
-  } catch(e) { console.error(e); }
-};
-
-window.toggleLock = function(index) {
-  playLockSound();
-  teamSlots[index].locked = !teamSlots[index].locked;
-  renderTeam();
-};
-
+// DESCARGA PARALELA INMEDIATA
 async function generateFullTeam() {
   playClick();
   const loader = document.getElementById('loading');
   loader.style.display = 'flex';
 
   try {
-    const pool = getAvailablePool();
-    const unlockedIndexes = teamSlots.map((s, i) => s.locked ? null : i).filter(i => i !== null);
-    const chosenIds = [];
-    for (let i = 0; i < unlockedIndexes.length; i++) {
-      if (pool.length > 0) {
-        const randPos = Math.floor(Math.random() * pool.length);
-        chosenIds.push(pool.splice(randPos, 1)[0]);
+    let pool = [];
+    const lockedIds = teamSlots.filter(s => s.locked && s.data).map(s => s.data.id);
+    activeGens.forEach(g => {
+      for (let i = GENERATIONS[g].start; i <= GENERATIONS[g].end; i++) {
+        if (!lockedIds.includes(i)) pool.push(i);
       }
-    }
-    const downloadedData = await Promise.all(chosenIds.map(id => fetchPoke(id)));
-    unlockedIndexes.forEach((slotIdx, i) => { teamSlots[slotIdx].data = downloadedData[i]; });
+    });
 
-    document.getElementById('mission-code').innerText = MISSION_NAMES[Math.floor(Math.random() * MISSION_NAMES.length)];
+    const unlockedIdxs = teamSlots.map((s, i) => s.locked ? null : i).filter(i => i !== null);
+    
+    // IDs al azar en memoria (0 milisegundos)
+    const randomIds = [];
+    for (let i = 0; i < unlockedIdxs.length; i++) {
+      const r = Math.floor(Math.random() * pool.length);
+      randomIds.push(pool.splice(r, 1)[0]);
+    }
+
+    // Petición múltiple concurrente (Descarga ultrarrápida)
+    const results = await Promise.all(
+      randomIds.map(id => fetch(`https://pokeapi.co/api/v2/pokemon/${id}`).then(r => r.json()))
+    );
+
+    unlockedIdxs.forEach((slotIdx, i) => teamSlots[slotIdx].data = results[i]);
+
     renderTeam();
-    updateTacticalRadar();
+    updateRadar();
     playVictory();
-  } catch (err) {
-    console.error(err);
+  } catch(e) {
+    console.error(e);
   } finally {
     loader.style.display = 'none';
   }
 }
 
-function updateTacticalRadar() {
-  const activeData = teamSlots.map(s => s.data).filter(d => d !== null);
-  if (!activeData.length) return;
+function updateRadar() {
+  const active = teamSlots.map(s => s.data).filter(d => d !== null);
+  if (!active.length) return;
 
-  let totalBST = 0, fastest = activeData[0], strongest = activeData[0], tankest = activeData[0];
-  const weaknessCount = {};
+  let bstSum = 0, fastest = active[0], strongest = active[0], tankest = active[0];
 
-  activeData.forEach(p => {
-    totalBST += p.stats.reduce((acc, s) => acc + s.base_stat, 0);
+  active.forEach(p => {
+    bstSum += p.stats.reduce((a, s) => a + s.base_stat, 0);
     if (p.stats[5].base_stat > fastest.stats[5].base_stat) fastest = p;
     if (Math.max(p.stats[1].base_stat, p.stats[3].base_stat) > Math.max(strongest.stats[1].base_stat, strongest.stats[3].base_stat)) strongest = p;
     if (Math.max(p.stats[2].base_stat, p.stats[4].base_stat) > Math.max(tankest.stats[2].base_stat, tankest.stats[4].base_stat)) tankest = p;
-
-    p.types.forEach(t => {
-      const weaks = TYPE_WEAKNESSES[t.type.name] || [];
-      weaks.forEach(w => { weaknessCount[w] = (weaknessCount[w] || 0) + 1; });
-    });
   });
 
-  const avgBST = Math.round(totalBST / activeData.length);
-  document.getElementById('stat-avg-bst').innerText = `${avgBST} Pts`;
-
-  const rankEl = document.getElementById('team-rank');
-  if (avgBST > 530) rankEl.innerText = 'RANGO: LÍDER SUPREMO';
-  else if (avgBST > 460) rankEl.innerText = 'RANGO: COMANDANTE ÉLITE';
-  else if (avgBST > 380) rankEl.innerText = 'RANGO: TENIENTE';
-  else rankEl.innerText = 'RANGO: RECLUTA ROCKET';
-
-  document.getElementById('stat-speedster').innerText = fastest.name.replace('-', ' ');
+  document.getElementById('stat-avg-bst').innerText = `${Math.round(bstSum / active.length)} Pts`;
+  document.getElementById('stat-speedster').innerText = fastest.name;
   document.getElementById('stat-speedster-val').innerText = `${fastest.stats[5].base_stat} Velocidad`;
-  document.getElementById('stat-mvp').innerText = strongest.name.replace('-', ' ');
+  document.getElementById('stat-mvp').innerText = strongest.name;
   document.getElementById('stat-mvp-val').innerText = `${Math.max(strongest.stats[1].base_stat, strongest.stats[3].base_stat)} Potencia`;
-  document.getElementById('stat-tank').innerText = tankest.name.replace('-', ' ');
+  document.getElementById('stat-tank').innerText = tankest.name;
   document.getElementById('stat-tank-val').innerText = `${Math.max(tankest.stats[2].base_stat, tankest.stats[4].base_stat)} Defensa`;
-
-  let worstType = '', worstCount = 0;
-  Object.keys(weaknessCount).forEach(t => {
-    if (weaknessCount[t] > worstCount) { worstCount = weaknessCount[t]; worstType = t; }
-  });
-
-  const alertBox = document.getElementById('weakness-report');
-  if (worstCount >= 3) {
-    alertBox.innerHTML = `<strong>¡Alerta Crítica!</strong> ${worstCount} miembros son vulnerables a <span style="text-transform:uppercase; color:var(--rocket-red);">${worstType}</span>.`;
-  } else {
-    alertBox.innerHTML = `<strong>Equilibrio Estable:</strong> Buena cobertura elemental del escuadrón.`;
-  }
 }
 
 function renderTeam() {
   const container = document.getElementById('team-container');
   container.innerHTML = '';
+
   teamSlots.forEach((slot, idx) => {
-    const poke = slot.data;
-    if (!poke) return;
+    const p = slot.data;
+    if (!p) return;
 
-    const isShiny = forceShiny;
-    const sprite = isShiny
-      ? (poke.sprites.other['official-artwork'].front_shiny || poke.sprites.front_shiny)
-      : (poke.sprites.other['official-artwork'].front_default || poke.sprites.front_default);
-
-    const cryUrl = poke.cries ? (poke.cries.latest || poke.cries.legacy) : '';
-    const typesHtml = poke.types.map(t => `<span class="type-badge type-${t.type.name}">${t.type.name}</span>`).join('');
-
-    const hp = poke.stats[0].base_stat;
-    const atk = poke.stats[1].base_stat;
-    const def = poke.stats[2].base_stat;
-    const spe = poke.stats[5].base_stat;
+    const sprite = forceShiny 
+      ? (p.sprites.other['official-artwork'].front_shiny || p.sprites.front_shiny) 
+      : (p.sprites.other['official-artwork'].front_default || p.sprites.front_default);
 
     const card = document.createElement('article');
-    card.className = `poke-card ${slot.locked ? 'is-locked' : ''} ${isShiny ? 'is-shiny' : ''}`;
+    card.className = `poke-card ${slot.locked ? 'is-locked' : ''} ${forceShiny ? 'is-shiny' : ''}`;
     card.innerHTML = `
       <div class="card-top-bar">
-        <span class="poke-num">#${String(poke.id).padStart(4, '0')}</span>
+        <span class="poke-num">#${String(p.id).padStart(4, '0')}</span>
         <div class="card-actions">
-          ${cryUrl ? `<button class="mini-btn" title="Grito" onclick="playPokemonCry('${cryUrl}')"><svg class="icon" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg></button>` : ''}
-          <button class="mini-btn" title="Reemplazar" onclick="rerollSlot(${idx})"><svg class="icon" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></button>
-          <button class="mini-btn ${slot.locked ? 'locked' : ''}" title="${slot.locked ? 'Desbloquear' : 'Bloquear'}" onclick="toggleLock(${idx})"><svg class="icon" viewBox="0 0 24 24">${slot.locked ? `<rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>` : `<rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/>`}</svg></button>
+          <button class="mini-btn" onclick="rerollSingle(${idx})">🔄</button>
+          <button class="mini-btn ${slot.locked ? 'locked' : ''}" onclick="toggleLock(${idx})">${slot.locked ? '🔒' : '🔓'}</button>
         </div>
       </div>
       <div class="poke-img-wrap" onclick="openDetails(${idx})">
-        <img class="poke-img" src="${sprite}" alt="${poke.name}" loading="lazy"/>
+        <img class="poke-img" src="${sprite}" alt="${p.name}" />
       </div>
-      <h2 class="poke-name" onclick="openDetails(${idx})">${poke.name.replace('-', ' ')} <svg class="icon shiny-tag" viewBox="0 0 24 24"><path d="M12 2l2.4 7.2h7.6l-6 4.8 2.4 7.2-6.4-4.8-6.4 4.8 2.4-7.2-6-4.8h7.6z"/></svg></h2>
-      <div class="poke-types">${typesHtml}</div>
+      <h2 class="poke-name" onclick="openDetails(${idx})">${p.name}</h2>
+      <div class="poke-types">${p.types.map(t => `<span class="type-badge type-${t.type.name}">${t.type.name}</span>`).join('')}</div>
       <div class="poke-stats">
-        <div class="stat-row"><span class="stat-lbl">HP</span><div class="stat-bar"><div style="height:100%; width:${Math.min((hp/255)*100, 100)}%; background:#22c55e;"></div></div><span class="stat-val">${hp}</span></div>
-        <div class="stat-row"><span class="stat-lbl">ATK</span><div class="stat-bar"><div style="height:100%; width:${Math.min((atk/255)*100, 100)}%; background:#ef4444;"></div></div><span class="stat-val">${atk}</span></div>
-        <div class="stat-row"><span class="stat-lbl">DEF</span><div class="stat-bar"><div style="height:100%; width:${Math.min((def/255)*100, 100)}%; background:#f59e0b;"></div></div><span class="stat-val">${def}</span></div>
-        <div class="stat-row"><span class="stat-lbl">SPD</span><div class="stat-bar"><div style="height:100%; width:${Math.min((spe/255)*100, 100)}%; background:#3b82f6;"></div></div><span class="stat-val">${spe}</span></div>
+        <div class="stat-row"><span class="stat-lbl">HP</span><div class="stat-bar"><div style="height:100%; width:${Math.min((p.stats[0].base_stat/255)*100, 100)}%; background:#22c55e;"></div></div><span class="stat-val">${p.stats[0].base_stat}</span></div>
+        <div class="stat-row"><span class="stat-lbl">ATK</span><div class="stat-bar"><div style="height:100%; width:${Math.min((p.stats[1].base_stat/255)*100, 100)}%; background:#ef4444;"></div></div><span class="stat-val">${p.stats[1].base_stat}</span></div>
+        <div class="stat-row"><span class="stat-lbl">DEF</span><div class="stat-bar"><div style="height:100%; width:${Math.min((p.stats[2].base_stat/255)*100, 100)}%; background:#f59e0b;"></div></div><span class="stat-val">${p.stats[2].base_stat}</span></div>
+        <div class="stat-row"><span class="stat-lbl">SPD</span><div class="stat-bar"><div style="height:100%; width:${Math.min((p.stats[5].base_stat/255)*100, 100)}%; background:#3b82f6;"></div></div><span class="stat-val">${p.stats[5].base_stat}</span></div>
       </div>
     `;
     container.appendChild(card);
   });
 }
 
-window.openDetails = function(index) {
+window.rerollSingle = async function(i) {
   playClick();
-  const p = teamSlots[index].data;
-  if (!p) return;
-  const sprite = forceShiny ? (p.sprites.other['official-artwork'].front_shiny || p.sprites.front_shiny) : (p.sprites.other['official-artwork'].front_default || p.sprites.front_default);
-  document.getElementById('modal-poke-img').src = sprite;
-  document.getElementById('modal-poke-name').innerText = p.name.replace('-', ' ');
-  document.getElementById('modal-poke-types').innerHTML = p.types.map(t => `<span class="type-badge type-${t.type.name}">${t.type.name}</span>`).join('');
-  document.getElementById('modal-poke-ability').innerText = p.abilities.map(a => a.ability.name.replace('-', ' ')).join(', ');
-  document.getElementById('modal-poke-size').innerText = `${p.weight/10} kg / ${p.height/10} m`;
+  const id = Math.floor(Math.random() * 1020) + 1;
+  const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${id}`);
+  teamSlots[i].data = await res.json();
+  renderTeam();
+  updateRadar();
+};
 
-  const statNames = ['HP', 'Ataque', 'Defensa', 'Sp. Atk', 'Sp. Def', 'Velocidad'];
-  const statColors = ['#22c55e', '#ef4444', '#f59e0b', '#06b6d4', '#8b5cf6', '#3b82f6'];
-  let statsHtml = '';
-  p.stats.forEach((st, i) => {
-    statsHtml += `<div class="stat-row"><span class="stat-lbl" style="width:65px;">${statNames[i]}</span><div class="stat-bar"><div style="height:100%; width:${Math.min((st.base_stat/255)*100, 100)}%; background:${statColors[i]};"></div></div><span class="stat-val">${st.base_stat}</span></div>`;
-  });
-  document.getElementById('modal-full-stats').innerHTML = statsHtml;
+window.toggleLock = function(i) {
+  playClick();
+  teamSlots[i].locked = !teamSlots[i].locked;
+  renderTeam();
+};
+
+window.openDetails = function(i) {
+  const p = teamSlots[i].data;
+  if (!p) return;
+  document.getElementById('modal-poke-img').src = p.sprites.other['official-artwork'].front_default || p.sprites.front_default;
+  document.getElementById('modal-poke-name').innerText = p.name;
+  document.getElementById('modal-poke-types').innerHTML = p.types.map(t => `<span class="type-badge type-${t.type.name}">${t.type.name}</span>`).join('');
+  document.getElementById('modal-poke-ability').innerText = p.abilities.map(a => a.ability.name).join(', ');
+  document.getElementById('modal-poke-size').innerText = `${p.weight/10} kg / ${p.height/10} m`;
   document.getElementById('poke-modal').style.display = 'flex';
 };
 
@@ -515,49 +606,31 @@ document.getElementById('modal-close-btn').addEventListener('click', () => {
 
 document.getElementById('export-btn').addEventListener('click', () => {
   playClick();
-  const valid = teamSlots.filter(s => s.data);
-  if (!valid.length) return;
-  let summary = "=== REPORTE OPERATIVO POKÉROCKET ===\n\n";
-  valid.forEach((s, idx) => {
-    const p = s.data;
-    const types = p.types.map(t => t.type.name.toUpperCase()).join('/');
-    summary += `${idx + 1}. ${p.name.toUpperCase()} [${types}]\n   Stats: HP ${p.stats[0].base_stat} | ATK ${p.stats[1].base_stat} | DEF ${p.stats[2].base_stat} | SPE ${p.stats[5].base_stat}\n\n`;
+  let txt = "=== ESCUADRÓN POKÉROCKET ===\n\n";
+  teamSlots.forEach((s, idx) => {
+    if (s.data) txt += `${idx+1}. ${s.data.name.toUpperCase()} [${s.data.types.map(t => t.type.name).join('/')}]\n`;
   });
-  navigator.clipboard.writeText(summary).then(() => showToast("¡Reporte copiado!"));
+  navigator.clipboard.writeText(txt).then(() => {
+    const t = document.getElementById('toast');
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2000);
+  });
 });
 
 document.getElementById('generate-btn').addEventListener('click', generateFullTeam);
-window.addEventListener('DOMContentLoaded', generateFullTeam);
 
-// MUTE
-const muteBtn = document.getElementById('mute-toggle');
-const soundIcon = document.getElementById('sound-icon');
-muteBtn.addEventListener('click', () => {
+// TEMA Y AUDIO
+document.getElementById('mute-toggle').addEventListener('click', () => {
   soundEnabled = !soundEnabled;
   playClick();
-  soundIcon.innerHTML = soundEnabled 
-    ? `<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>`
-    : `<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>`;
+  document.getElementById('sound-text').innerText = soundEnabled ? 'Audio: ON' : 'Audio: OFF';
 });
 
-// TEMA
-const themeBtn = document.getElementById('theme-toggle');
-const themeIcon = document.getElementById('theme-icon');
-if (localStorage.getItem('pk_rocket_theme') === 'dark') {
-  document.documentElement.setAttribute('data-theme', 'dark');
-  themeIcon.innerHTML = `<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>`;
-}
-
-themeBtn.addEventListener('click', () => {
+document.getElementById('theme-toggle').addEventListener('click', () => {
   playClick();
-  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-  if (isDark) {
-    document.documentElement.setAttribute('data-theme', 'light');
-    themeIcon.innerHTML = `<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>`;
-    localStorage.setItem('pk_rocket_theme', 'light');
-  } else {
-    document.documentElement.setAttribute('data-theme', 'dark');
-    themeIcon.innerHTML = `<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>`;
-    localStorage.setItem('pk_rocket_theme', 'dark');
-  }
+  const isDark = document.body.getAttribute('data-theme') === 'light';
+  document.body.setAttribute('data-theme', isDark ? 'dark' : 'light');
 });
+
+// INICIO AUTOMÁTICO
+generateFullTeam();
