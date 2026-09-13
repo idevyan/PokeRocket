@@ -162,7 +162,76 @@
         </div>
 
         <!-- ESCENARIO DE PELEA CLÁSICO -->
+        <!-- ESCENARIO CON LA IMAGEN DE LA CUEVA -->
         <div class="retro-battle-arena">
+          
+          <!-- ZONA ENEMIGA (En el cráter superior derecho) -->
+          <div class="battle-unit-enemy">
+            <div class="pokemon-hud hud-enemy">
+              <div class="hud-top">
+                <span class="poke-name-hud" id="e-name">Cargando...</span>
+                <span class="gender-sym" id="e-gender">♂</span>
+                <span class="poke-level-hud">Lv<span id="e-lvl">50</span></span>
+              </div>
+              <div class="hp-gauge-container">
+                <span class="hp-tag">HP</span>
+                <div class="hp-bar-bg">
+                  <div class="hp-bar-fill" id="e-hp-bar"></div>
+                </div>
+              </div>
+              <div class="party-balls" id="e-party-balls"></div>
+            </div>
+
+            <!-- Sprite Rival sobre el cráter de la cueva -->
+            <div class="platform-enemy">
+              <img class="battle-sprite" id="e-sprite" src="" alt="Rival" />
+            </div>
+          </div>
+
+          <!-- ZONA JUGADOR (En el cráter inferior izquierdo) -->
+          <div class="battle-unit-player">
+            <div class="platform-player">
+              <img class="battle-sprite" id="p-sprite" src="" alt="Jugador" />
+            </div>
+
+            <div class="pokemon-hud hud-player">
+              <div class="hud-top">
+                <span class="poke-name-hud" id="p-name">Cargando...</span>
+                <span class="gender-sym" id="p-gender">♀</span>
+                <span class="poke-level-hud">Lv<span id="p-lvl">50</span></span>
+              </div>
+              <div class="hp-gauge-container">
+                <span class="hp-tag">HP</span>
+                <div class="hp-bar-bg">
+                  <div class="hp-bar-fill" id="p-hp-bar"></div>
+                </div>
+              </div>
+              <div class="hp-numbers-hud">
+                <span id="p-hp-current">--</span>/<span id="p-hp-max">--</span>
+              </div>
+              <div class="party-balls" id="p-party-balls"></div>
+            </div>
+          </div>
+
+          <!-- OVERLAY DE RECOMPENSA ROGUELIKE (AL GANAR UN PISO) -->
+          <div class="rogue-reward-screen" id="rogue-reward-screen" style="display: none;">
+            <div class="reward-card-box">
+              <h3 class="reward-title">¡PISO COMPLETADO!</h3>
+              <p class="reward-subtitle">Elige tu recompensa para continuar descendiendo:</p>
+              <div class="rewards-options" id="rewards-options-container"></div>
+            </div>
+          </div>
+
+          <!-- SUB-MENÚ DE LA BOLSA (ITEMS) -->
+          <div class="bag-screen" id="bag-screen" style="display: none;">
+            <div class="bag-box">
+              <h3 class="reward-title">MOCHILA ROCKET</h3>
+              <div class="bag-items-list" id="bag-items-container"></div>
+              <button class="cancel-move-btn" id="close-bag-btn" style="margin-top: 10px;">CERRAR</button>
+            </div>
+          </div>
+
+        </div>
           
           <!-- ZONA ENEMIGA (ARRIBA) -->
           <div class="battle-unit-enemy">
