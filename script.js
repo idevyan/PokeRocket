@@ -34,52 +34,85 @@ function playVictory() {
 }
 
 // ========================================================
-// ROUTING (Generador <-> Modo Roguelike)
+// ICONOS VECTORIALES DE TIPOS ELEMENTALES
 // ========================================================
-const viewGen = document.getElementById('view-generator');
-const viewBattle = document.getElementById('view-battle');
-const navModeBtn = document.getElementById('nav-mode-btn');
-const navModeText = document.getElementById('nav-mode-text');
+const TYPE_SVG_ICONS = {
+  fire: `<svg viewBox="0 0 24 24"><path d="M12 2c-.5 2-2 4-3 6-1.5 3-1 6 1 8.5 2 2.5 5 2.5 7 0 2-2.5 2.5-5.5 1-8.5-1-2-2.5-4-3-6-1 2-2 3-3 3s-2-1-3-3z"/></svg>`,
+  water: `<svg viewBox="0 0 24 24"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>`,
+  grass: `<svg viewBox="0 0 24 24"><path d="M17 8C8 10 5.9 16.17 3.82 21.34l1.89.66.95-2.3c.48.17.98.3 1.34.3C19 20 22 3 22 3c-1 2-8 2.25-13 3.75C12 7.8 15 8 17 8z"/></svg>`,
+  electric: `<svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`,
+  normal: `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/></svg>`,
+  ice: `<svg viewBox="0 0 24 24"><path d="M12 2v20M2 12h20M4.93 4.93l14.14 14.14M4.93 19.07L19.07 4.93"/></svg>`,
+  fighting: `<svg viewBox="0 0 24 24"><path d="M14 6l3 3-5 5-3-3 5-5zM4 18l5-5 3 3-5 5H4v-3z"/></svg>`,
+  poison: `<svg viewBox="0 0 24 24"><path d="M12 2a5 5 0 0 0-5 5c0 2 1 3 2 4v4h6v-4c1-1 2-2 2-4a5 5 0 0 0-5-5z"/></svg>`,
+  ground: `<svg viewBox="0 0 24 24"><path d="M2 18h20M5 14h14M8 10h8"/></svg>`,
+  flying: `<svg viewBox="0 0 24 24"><path d="M3 15c4-6 14-8 18-2-5 0-8 3-10 6-3 0-6-2-8-4z"/></svg>`,
+  psychic: `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z"/></svg>`,
+  bug: `<svg viewBox="0 0 24 24"><circle cx="12" cy="14" r="5"/><path d="M12 9V5M9 7l-2-2M15 7l2-2M4 13h3M17 13h3M5 18l3-1M19 18l-3-1"/></svg>`,
+  rock: `<svg viewBox="0 0 24 24"><polygon points="12 3 21 8 18 19 6 19 3 8"/></svg>`,
+  ghost: `<svg viewBox="0 0 24 24"><path d="M12 2a8 8 0 0 0-8 8v11l4-2 4 2 4-2 4 2V10a8 8 0 0 0-8-8z"/><circle cx="9" cy="10" r="1"/><circle cx="15" cy="10" r="1"/></svg>`,
+  dragon: `<svg viewBox="0 0 24 24"><path d="M4 15c4-4 8-3 11-1 2-3 5-3 6-3-2 5-6 7-8 10-4 1-7-2-9-6z"/></svg>`,
+  steel: `<svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/></svg>`,
+  fairy: `<svg viewBox="0 0 24 24"><polygon points="12 2 15 9 22 9 17 14 19 21 12 17 5 21 7 14 2 9 9 9"/></svg>`,
+  dark: `<svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`
+};
 
-function switchView(mode) {
+function renderTypeBadge(type) {
+  const icon = TYPE_SVG_ICONS[type] || TYPE_SVG_ICONS.normal;
+  return `<span class="type-badge type-${type}">${icon} ${type}</span>`;
+}
+
+// ========================================================
+// SISTEMA DE PESTAÑAS (Generador, Roguelike, Gacha)
+// ========================================================
+const tabGen = document.getElementById('btn-tab-gen');
+const tabRogue = document.getElementById('btn-tab-rogue');
+const tabGacha = document.getElementById('btn-tab-gacha');
+
+const viewGen = document.getElementById('view-generator');
+const viewRogue = document.getElementById('view-battle');
+const viewGacha = document.getElementById('view-gacha');
+
+function setTab(tabName) {
   playClick();
-  if (mode === 'battle') {
-    viewGen.classList.remove('active');
-    viewBattle.classList.add('active');
-    navModeText.innerText = 'Generador';
+  [tabGen, tabRogue, tabGacha].forEach(b => b.classList.remove('active'));
+  [viewGen, viewRogue, viewGacha].forEach(v => v.classList.remove('active'));
+
+  if (tabName === 'gen') {
+    tabGen.classList.add('active');
+    viewGen.classList.add('active');
+    history.pushState("", document.title, window.location.pathname);
+  } else if (tabName === 'rogue') {
+    tabRogue.classList.add('active');
+    viewRogue.classList.add('active');
     window.location.hash = 'rogue';
     initTowerMatch();
-  } else {
-    viewBattle.classList.remove('active');
-    viewGen.classList.add('active');
-    navModeText.innerText = 'Modo Roguelike';
-    history.pushState("", document.title, window.location.pathname);
+  } else if (tabName === 'gacha') {
+    tabGacha.classList.add('active');
+    viewGacha.classList.add('active');
+    window.location.hash = 'gacha';
   }
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-navModeBtn.addEventListener('click', () => {
-  const isBattle = viewBattle.classList.contains('active');
-  switchView(isBattle ? 'generator' : 'battle');
-});
+tabGen.addEventListener('click', () => setTab('gen'));
+tabRogue.addEventListener('click', () => setTab('rogue'));
+tabGacha.addEventListener('click', () => setTab('gacha'));
+document.getElementById('brand-logo').addEventListener('click', () => setTab('gen'));
 
-document.getElementById('tower-back-btn').addEventListener('click', () => switchView('generator'));
-document.getElementById('brand-logo').addEventListener('click', () => switchView('generator'));
-
-if (window.location.hash === '#rogue' || window.location.hash === '#battle') {
-  switchView('battle');
-}
+if (window.location.hash === '#rogue') setTab('rogue');
+if (window.location.hash === '#gacha') setTab('gacha');
 
 // ========================================================
-// MOTOR ROGUELIKE (EQUIPO PROGRESIVO HASTA 3 POKÉMON)
+// MOTOR ROGUELIKE INFINITO (CON MUERTE PERMANENTE)
 // ========================================================
 let towerFloor = 1;
-let playerParty = []; // Tu equipo de 1 a 3 Pokémon
-let pActiveIdx = 0;   // Índice del Pokémon que lucha actualmente
+let playerParty = []; // Máximo 3 miembros
+let pActiveIdx = 0;
 let enemyPokemon = null;
 let battleBusy = false;
 
-const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+const sleep = (ms) => new Promise(res => setTimeout(res, ms));
 
 const TYPE_CHART = {
   fire: { grass: 2, ice: 2, bug: 2, steel: 2, water: 0.5, fire: 0.5, rock: 0.5, dragon: 0.5 },
@@ -89,7 +122,6 @@ const TYPE_CHART = {
   normal: { rock: 0.5, steel: 0.5, ghost: 0 }
 };
 
-// Generar Pokémon con stats escaladas
 async function fetchTowerPokemon(floor = 1) {
   const randId = Math.floor(Math.random() * 1020) + 1;
   const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${randId}`);
@@ -116,10 +148,10 @@ async function fetchTowerPokemon(floor = 1) {
   };
 }
 
-// Iniciar Partida
 async function initTowerMatch() {
   document.getElementById('rogue-reward-screen').style.display = 'none';
 
+  // Si no hay sobrevivientes, iniciar desde el Piso 1
   if (playerParty.length === 0 || towerFloor === 1) {
     towerFloor = 1;
     playerParty = [];
@@ -131,7 +163,6 @@ async function initTowerMatch() {
   loadNextFloorBattle();
 }
 
-// SELECCIÓN INICIAL (1 DE 3)
 async function showStarterChoice() {
   setDialog("Generando 3 opciones para tu Pokémon inicial...");
   const modal = document.getElementById('rogue-reward-screen');
@@ -154,10 +185,10 @@ async function showStarterChoice() {
       <img src="${poke.sprite}" />
       <strong>${poke.name.toUpperCase()}</strong>
       <span style="font-size:0.75rem; color:#94A3B8;">HP: ${poke.maxHp} | ATK: ${poke.atk}</span>
-      <span style="font-size:0.7rem; color:#F59E0B; text-transform:uppercase; margin-top:4px;">Tipo: ${poke.types.join('/')}</span>
+      <div style="margin-top:4px;">${poke.types.map(t => renderTypeBadge(t)).join('')}</div>
     `;
     card.onclick = () => {
-      playerParty = [poke]; // Inicias solo con este
+      playerParty = [poke];
       pActiveIdx = 0;
       modal.style.display = 'none';
       loadNextFloorBattle();
@@ -166,7 +197,6 @@ async function showStarterChoice() {
   });
 }
 
-// Cargar Piso de Combate
 async function loadNextFloorBattle() {
   document.getElementById('tower-floor-txt').innerText = `PISO ${towerFloor} (INFINITO)`;
   document.getElementById('tower-enemy-title').innerText = `CUEVA OSCURA - NIVEL ${towerFloor}`;
@@ -189,20 +219,17 @@ async function loadNextFloorBattle() {
 function renderField() {
   const p = playerParty[pActiveIdx];
 
-  // Jugador
   document.getElementById('p-name').innerText = p.name;
   document.getElementById('p-gender').innerText = p.gender;
   document.getElementById('p-sprite').src = p.sprite;
   updateHpBar('p', p);
 
-  // Rival
   document.getElementById('e-name').innerText = enemyPokemon.name;
   document.getElementById('e-gender').innerText = enemyPokemon.gender;
   document.getElementById('e-sprite').src = enemyPokemon.sprite;
   updateHpBar('e', enemyPokemon);
 }
 
-// ACTUALIZACIÓN VISUAL Y NUMÉRICA DE VIDA
 function updateHpBar(side, poke) {
   const pct = Math.max(0, Math.min(100, (poke.hp / poke.maxHp) * 100));
   const bar = document.getElementById(`${side}-hp-bar`);
@@ -214,18 +241,18 @@ function updateHpBar(side, poke) {
     else bar.style.backgroundColor = '#E11D48';
   }
 
-  const currentTxt = document.getElementById(`${side}-hp-current`);
-  const maxTxt = document.getElementById(`${side}-hp-max`);
-  if (currentTxt && maxTxt) {
-    currentTxt.innerText = Math.max(0, poke.hp);
-    maxTxt.innerText = poke.maxHp;
+  const cur = document.getElementById(`${side}-hp-current`);
+  const max = document.getElementById(`${side}-hp-max`);
+  if (cur && max) {
+    cur.innerText = Math.max(0, poke.hp);
+    max.innerText = poke.maxHp;
   }
 }
 
 function updateBalls() {
   const pContainer = document.getElementById('p-party-balls');
   if (pContainer) {
-    pContainer.innerHTML = playerParty.map((p, idx) => 
+    pContainer.innerHTML = playerParty.map(p => 
       `<div class="pkball ${p.hp <= 0 ? 'fainted' : ''}" title="${p.name}"></div>`
     ).join('');
   }
@@ -235,7 +262,6 @@ function setDialog(txt) {
   document.getElementById('battle-dialog-txt').innerText = txt;
 }
 
-// Menús GBA
 const menuCommands = document.getElementById('menu-commands');
 const menuMoves = document.getElementById('menu-moves');
 const menuParty = document.getElementById('menu-party-switch');
@@ -251,7 +277,7 @@ function showCommandMenu(which) {
 }
 
 document.getElementById('cmd-fight-btn').addEventListener('click', () => { 
-  if (!battleBusy && playerParty[pActiveIdx].hp > 0) showCommandMenu('moves'); 
+  if (!battleBusy && playerParty[pActiveIdx] && playerParty[pActiveIdx].hp > 0) showCommandMenu('moves'); 
 });
 
 document.getElementById('cmd-poke-btn').addEventListener('click', () => { 
@@ -274,7 +300,6 @@ function renderMovesButtons() {
   });
 }
 
-// LISTA PARA CAMBIAR DE POKÉMON EN COMBATE
 function renderPartySwitchList() {
   const container = document.getElementById('party-switch-container');
   container.innerHTML = '';
@@ -302,13 +327,11 @@ async function switchPlayerPokemon(newIdx) {
   updateBalls();
   await sleep(800);
 
-  // El rival contraataca en el turno de cambio
   const eMove = enemyPokemon.moves[Math.floor(Math.random() * enemyPokemon.moves.length)];
   await attackStep(enemyPokemon, playerParty[pActiveIdx], eMove, 'e', 'p');
   checkFaintStatus();
 }
 
-// TURNO DE COMBATE CON DAÑO FUNCIONAL
 async function doTowerTurn(moveIdx) {
   const p = playerParty[pActiveIdx];
   if (battleBusy || p.hp <= 0 || enemyPokemon.hp <= 0) return;
@@ -355,7 +378,6 @@ async function attackStep(atk, def, move, atkSide, defSide) {
     mult = TYPE_CHART[move.type][def.types[0]];
   }
 
-  // FÓRMULA DE DAÑO GARANTIZADO
   const base = Math.floor((((2 * 50 / 5 + 2) * move.power * (atk.atk / def.def)) / 50) + 2);
   const dmg = Math.max(12, Math.floor(base * mult * (Math.random() * 0.15 + 0.85)));
 
@@ -374,33 +396,35 @@ async function attackStep(atk, def, move, atkSide, defSide) {
   await sleep(700);
 }
 
-// COMPROBAR K.O.
+// COMPROBACIÓN DE MUERTE PERMANENTE (PERMADEATH)
 async function checkFaintStatus() {
   const p = playerParty[pActiveIdx];
 
-  // Si tu Pokémon activo cae
-  if (p.hp <= 0) {
+  // 1. SI TU POKÉMON ACTIVO MUERE: ¡SE ELIMINA DEL EQUIPO PARA SIEMPRE!
+  if (p && p.hp <= 0) {
     playBeep(100, 'sawtooth', 0.4);
-    setDialog(`¡${p.name.toUpperCase()} cayó debilitado!`);
+    setDialog(`¡${p.name.toUpperCase()} ha caído y se ha perdido para siempre!`);
+    
+    // Eliminarlo de tu equipo permanentemente
+    playerParty.splice(pActiveIdx, 1);
     updateBalls();
-    await sleep(900);
+    await sleep(1000);
 
-    // ¿Queda otro en el equipo vivo?
-    const nextAlive = playerParty.findIndex(poke => poke.hp > 0);
-    if (nextAlive !== -1) {
-      pActiveIdx = nextAlive;
-      setDialog(`¡Adelante ${playerParty[pActiveIdx].name.toUpperCase()}!`);
+    // Si aún tienes sobrevivientes en tu equipo:
+    if (playerParty.length > 0) {
+      pActiveIdx = 0;
+      setDialog(`¡Solo te quedan ${playerParty.length} Pokémon! ¡Adelante ${playerParty[pActiveIdx].name.toUpperCase()}!`);
       renderField();
       updateBalls();
       battleBusy = false;
     } else {
-      // Game Over total
+      // Si todos tus Pokémon murieron: Fin del juego
       showGameOverScreen();
     }
     return;
   }
 
-  // Si el rival cae
+  // 2. SI EL RIVAL MUERE: VICTORIA DE PISO
   if (enemyPokemon.hp <= 0) {
     playVictory();
     setDialog(`¡El ${enemyPokemon.name.toUpperCase()} rival ha sido derrotado!`);
@@ -418,14 +442,14 @@ function showGameOverScreen() {
   const sub = document.getElementById('reward-modal-sub');
   const container = document.getElementById('rewards-options-container');
 
-  title.innerText = "¡GAME OVER!";
+  title.innerText = "¡EXPEDICIÓN FALLIDA!";
   title.style.color = "#EF4444";
-  sub.innerText = `Has caído en el Piso ${towerFloor}. Todo tu equipo sucumbió.`;
+  sub.innerText = `Todos tus Pokémon murieron en el Piso ${towerFloor}. Al perder, la partida se reinicia desde el Piso 1.`;
 
   container.innerHTML = `
     <div style="grid-column: 1 / -1;">
       <button class="retro-btn" style="background:#E11D48; padding:15px; font-size:0.9rem; width:100%; border:3px solid #000;" onclick="restartEntireGame()">
-        COMENZAR NUEVA EXPEDICIÓN (PISO 1)
+        COMENZAR NUEVA PARTIDA (PISO 1)
       </button>
     </div>
   `;
@@ -439,7 +463,6 @@ window.restartEntireGame = function() {
   initTowerMatch();
 };
 
-// DRAFT DE RECOMPENSAS: SE SUMA AL EQUIPO (HASTA 3)
 async function showVictoryRewardDraft() {
   const modal = document.getElementById('rogue-reward-screen');
   const title = document.getElementById('reward-modal-title');
@@ -448,7 +471,7 @@ async function showVictoryRewardDraft() {
 
   title.innerText = `¡PISO ${towerFloor} SUPERADO!`;
   title.style.color = "#F59E0B";
-  sub.innerText = `Elige tu recompensa (Equipo: ${playerParty.length}/3 miembros):`;
+  sub.innerText = `Elige tu recompensa (Equipo: ${playerParty.length}/3 sobrevivientes):`;
   container.innerHTML = "<p>Buscando especímenes...</p>";
   modal.style.display = 'flex';
 
@@ -474,7 +497,7 @@ async function showVictoryRewardDraft() {
     `;
     card.onclick = () => {
       if (playerParty.length < 3) {
-        playerParty.push(poke); // ¡SE AÑADE A TU EQUIPO!
+        playerParty.push(poke);
         advanceNextFloor();
       } else {
         showSwapScreen(poke);
@@ -483,15 +506,17 @@ async function showVictoryRewardDraft() {
     container.appendChild(card);
   });
 
-  // Opción extra: Conservar y curar a todo el equipo
+  // Opción descansar y curar
   const healCard = document.createElement('div');
   healCard.className = 'reward-choice-card';
   healCard.style.borderColor = '#F59E0B';
   healCard.innerHTML = `
     <span style="color:#F59E0B; font-size:0.75rem; font-weight:700;">DESCANSAR</span>
-    <div style="font-size:2.5rem; margin:8px 0;">💖</div>
+    <div style="margin:10px 0;">
+      <svg class="icon" style="width:36px; height:36px; color:#F59E0B;" viewBox="0 0 24 24"><polygon points="12 2 15 9 22 9 17 14 19 21 12 17 5 21 7 14 2 9 9 9"/></svg>
+    </div>
     <strong>CURAR EQUIPO</strong>
-    <span style="font-size:0.75rem; color:#10B981;">Cura +50% PS a todos</span>
+    <span style="font-size:0.75rem; color:#10B981;">Restaura 50% PS a todos</span>
   `;
   healCard.onclick = () => {
     playerParty.forEach(p => p.hp = Math.min(p.maxHp, p.hp + Math.floor(p.maxHp * 0.5)));
@@ -527,6 +552,93 @@ function advanceNextFloor() {
 }
 
 document.getElementById('tower-restart-btn').addEventListener('click', restartEntireGame);
+
+// ========================================================
+// NUEVA SECCIÓN: MÁQUINA GACHA POKÉMON ROCKET
+// ========================================================
+const LEGENDARY_IDS = [144,145,146,150,151,243,244,245,249,250,251,382,383,384,385,386,483,484,487,493,643,644,646,716,717,718,789,790,791,792,800,888,889,890,1007,1008];
+const EPIC_IDS = [149, 248, 282, 373, 376, 445, 448, 635, 706, 778, 884, 887, 998, 1000];
+
+let gachaHistory = [];
+let gachaBusy = false;
+
+async function pullSingleGacha() {
+  const roll = Math.random() * 100;
+  let chosenId = 1;
+  let rarity = 'common';
+
+  if (roll < 3) {
+    rarity = 'legendary';
+    chosenId = LEGENDARY_IDS[Math.floor(Math.random() * LEGENDARY_IDS.length)];
+  } else if (roll < 12) {
+    rarity = 'epic';
+    chosenId = EPIC_IDS[Math.floor(Math.random() * EPIC_IDS.length)];
+  } else if (roll < 40) {
+    rarity = 'rare';
+    chosenId = Math.floor(Math.random() * 800) + 1;
+  } else {
+    rarity = 'common';
+    chosenId = Math.floor(Math.random() * 1020) + 1;
+  }
+
+  const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${chosenId}`);
+  const data = await res.json();
+
+  return {
+    name: data.name,
+    rarity: rarity,
+    sprite: data.sprites.other['official-artwork'].front_default || data.sprites.front_default,
+    types: data.types.map(t => t.type.name)
+  };
+}
+
+async function executeGachaPull(count) {
+  if (gachaBusy) return;
+  gachaBusy = true;
+  playClick();
+
+  const orb = document.getElementById('gacha-visual-orb');
+  orb.classList.add('pulling');
+  playBeep(440, 'sawtooth', 0.5);
+
+  try {
+    const promises = [];
+    for (let i = 0; i < count; i++) promises.push(pullSingleGacha());
+    const results = await Promise.all(promises);
+
+    await sleep(700);
+    orb.classList.remove('pulling');
+
+    results.forEach(item => gachaHistory.unshift(item));
+    renderGachaCollection();
+    playVictory();
+  } catch(e) {
+    console.error(e);
+  } finally {
+    gachaBusy = false;
+    orb.classList.remove('pulling');
+  }
+}
+
+function renderGachaCollection() {
+  const grid = document.getElementById('gacha-results-grid');
+  grid.innerHTML = '';
+
+  gachaHistory.forEach(item => {
+    const card = document.createElement('div');
+    card.className = `gacha-item-card ${item.rarity}`;
+    card.innerHTML = `
+      <span class="gacha-rarity-tag ${item.rarity}">${item.rarity}</span>
+      <img src="${item.sprite}" />
+      <strong style="text-transform:capitalize; display:block; font-size:0.85rem;">${item.name}</strong>
+      <div style="margin-top:4px;">${item.types.map(t => renderTypeBadge(t)).join('')}</div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+document.getElementById('btn-pull-1').addEventListener('click', () => executeGachaPull(1));
+document.getElementById('btn-pull-10').addEventListener('click', () => executeGachaPull(10));
 
 // ========================================================
 // GENERADOR DE EQUIPOS (ULTRARRÁPIDO)
@@ -617,11 +729,11 @@ function updateRadar() {
 
   document.getElementById('stat-avg-bst').innerText = `${Math.round(bstSum / active.length)} Pts`;
   document.getElementById('stat-speedster').innerText = fastest.name;
-  document.getElementById('stat-speedster-val').innerText = `${fastest.stats[5].base_stat} Velocidad`;
+  document.getElementById('stat-speedster-val').innerText = `${fastest.stats[5].base_stat} SPD`;
   document.getElementById('stat-mvp').innerText = strongest.name;
-  document.getElementById('stat-mvp-val').innerText = `${Math.max(strongest.stats[1].base_stat, strongest.stats[3].base_stat)} Potencia`;
+  document.getElementById('stat-mvp-val').innerText = `${Math.max(strongest.stats[1].base_stat, strongest.stats[3].base_stat)} ATK`;
   document.getElementById('stat-tank').innerText = tankest.name;
-  document.getElementById('stat-tank-val').innerText = `${Math.max(tankest.stats[2].base_stat, tankest.stats[4].base_stat)} Defensa`;
+  document.getElementById('stat-tank-val').innerText = `${Math.max(tankest.stats[2].base_stat, tankest.stats[4].base_stat)} DEF`;
 }
 
 function renderTeam() {
@@ -642,15 +754,19 @@ function renderTeam() {
       <div class="card-top-bar">
         <span class="poke-num">#${String(p.id).padStart(4, '0')}</span>
         <div class="card-actions">
-          <button class="mini-btn" onclick="rerollSingle(${idx})">🔄</button>
-          <button class="mini-btn ${slot.locked ? 'locked' : ''}" onclick="toggleLock(${idx})">${slot.locked ? '🔒' : '🔓'}</button>
+          <button class="mini-btn" onclick="rerollSingle(${idx})" title="Cambiar">
+            <svg class="icon" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          </button>
+          <button class="mini-btn ${slot.locked ? 'locked' : ''}" onclick="toggleLock(${idx})" title="Fijar">
+            <svg class="icon" viewBox="0 0 24 24">${slot.locked ? '<rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>' : '<rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/>'}</svg>
+          </button>
         </div>
       </div>
       <div class="poke-img-wrap" onclick="openDetails(${idx})">
         <img class="poke-img" src="${sprite}" alt="${p.name}" />
       </div>
       <h2 class="poke-name" onclick="openDetails(${idx})">${p.name}</h2>
-      <div class="poke-types">${p.types.map(t => `<span class="type-badge type-${t.type.name}">${t.type.name}</span>`).join('')}</div>
+      <div class="poke-types">${p.types.map(t => renderTypeBadge(t)).join('')}</div>
       <div class="poke-stats">
         <div class="stat-row"><span class="stat-lbl">HP</span><div class="stat-bar"><div style="height:100%; width:${Math.min((p.stats[0].base_stat/255)*100, 100)}%; background:#22c55e;"></div></div><span class="stat-val">${p.stats[0].base_stat}</span></div>
         <div class="stat-row"><span class="stat-lbl">ATK</span><div class="stat-bar"><div style="height:100%; width:${Math.min((p.stats[1].base_stat/255)*100, 100)}%; background:#ef4444;"></div></div><span class="stat-val">${p.stats[1].base_stat}</span></div>
@@ -682,7 +798,7 @@ window.openDetails = function(i) {
   if (!p) return;
   document.getElementById('modal-poke-img').src = p.sprites.other['official-artwork'].front_default || p.sprites.front_default;
   document.getElementById('modal-poke-name').innerText = p.name;
-  document.getElementById('modal-poke-types').innerHTML = p.types.map(t => `<span class="type-badge type-${t.type.name}">${t.type.name}</span>`).join('');
+  document.getElementById('modal-poke-types').innerHTML = p.types.map(t => renderTypeBadge(t)).join('');
   document.getElementById('modal-poke-ability').innerText = p.abilities.map(a => a.ability.name).join(', ');
   document.getElementById('modal-poke-size').innerText = `${p.weight/10} kg / ${p.height/10} m`;
   document.getElementById('poke-modal').style.display = 'flex';
@@ -711,7 +827,10 @@ document.getElementById('generate-btn').addEventListener('click', generateFullTe
 document.getElementById('mute-toggle').addEventListener('click', () => {
   soundEnabled = !soundEnabled;
   playClick();
-  document.getElementById('sound-text').innerText = soundEnabled ? 'Audio: ON' : 'Audio: OFF';
+  const icon = document.getElementById('sound-icon');
+  icon.innerHTML = soundEnabled 
+    ? '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>'
+    : '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>';
 });
 
 document.getElementById('theme-toggle').addEventListener('click', () => {
@@ -720,4 +839,5 @@ document.getElementById('theme-toggle').addEventListener('click', () => {
   document.body.setAttribute('data-theme', isDark ? 'dark' : 'light');
 });
 
+// INICIO
 generateFullTeam();
