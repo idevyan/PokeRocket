@@ -482,8 +482,8 @@ body {
 
 .rewards-options {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(115px, 1fr)) !important;
+  gap: 10px !important;
 }
 
 .reward-choice-card {
