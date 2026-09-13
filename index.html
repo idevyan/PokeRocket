@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PokéRocket - Tactical Builder, Roguelike & Gacha</title>
+  <title>PokéRocket - Tactical Builder, Roguelike & Arcade</title>
   
-  <!-- Nueva Fuente Pixel Art Silkscreen -->
+  <!-- Fuente Pixel Art Silkscreen -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Silkscreen:wght@400;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css?v=gachaFinal" />
+  <link rel="stylesheet" href="style.css?v=arcade1" />
 </head>
 <body>
 
@@ -20,7 +20,7 @@
         <span class="rocket-r">R</span>
         <div>
           <h1 class="pk-title">PokéRocket</h1>
-          <p class="pk-subtitle">SISTEMA TÁCTICO • ROGUELIKE • GACHA</p>
+          <p class="pk-subtitle">SISTEMA TÁCTICO • ROGUELIKE • ARCADE</p>
         </div>
       </div>
       <div class="top-actions">
@@ -33,14 +33,18 @@
           <svg class="icon" viewBox="0 0 24 24"><polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"/><line x1="13" x2="19" y1="19" y2="13"/><polyline points="14.5 6.5 18 3 21 3 21 6 17.5 9.5"/></svg>
           <span>Roguelike</span>
         </button>
-        <button class="action-btn" id="btn-tab-gacha">
-          <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 10 10H2A10 10 0 0 1 12 2z"/><circle cx="12" cy="12" r="3"/></svg>
-          <span>Gacha Rocket</span>
+        <button class="action-btn" id="btn-tab-quiz">
+          <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>
+          <span>Silueta</span>
         </button>
-        <button class="action-btn icon-only" id="mute-toggle" title="Silenciar / Activar Sonido">
+        <button class="action-btn" id="btn-tab-casino">
+          <svg class="icon" viewBox="0 0 24 24"><rect height="18" rx="2" width="18" x="3" y="3"/><circle cx="8.5" cy="8.5" r="1.5"/><circle cx="15.5" cy="8.5" r="1.5"/><circle cx="15.5" cy="15.5" r="1.5"/><circle cx="8.5" cy="15.5" r="1.5"/></svg>
+          <span>Casino</span>
+        </button>
+        <button class="action-btn icon-only" id="mute-toggle" title="Audio">
           <svg class="icon" id="sound-icon" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
         </button>
-        <button class="action-btn icon-only" id="theme-toggle" title="Cambiar Tema">
+        <button class="action-btn icon-only" id="theme-toggle" title="Tema">
           <svg class="icon" id="theme-icon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
         </button>
       </div>
@@ -147,7 +151,7 @@
     </div>
 
     <!-- ========================================================
-         VISTA 2: MODO ROGUELIKE INFINITO (CON MUERTE PERMANENTE)
+         VISTA 2: ROGUELIKE (CUEVA Y MUERTE PERMANENTE)
          ======================================================== -->
     <div class="app-view" id="view-battle">
       <div class="tower-wrapper">
@@ -248,52 +252,91 @@
     </div>
 
     <!-- ========================================================
-         VISTA 3: GACHA POKÉMON ROCKET (NUEVA SECCIÓN)
+         VISTA 3: MINIJUEGO 1 - ¿QUIÉN ES ESE POKÉMON?
          ======================================================== -->
-    <div class="app-view" id="view-gacha">
-      <div class="gacha-wrapper">
-        <div class="gacha-header-box">
-          <h2 class="gacha-main-title">
-            <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 10 10H2A10 10 0 0 1 12 2z"/><circle cx="12" cy="12" r="3"/></svg>
-            MÁQUINA GACHA ROCKET
+    <div class="app-view" id="view-quiz">
+      <div class="minigame-card-wrapper">
+        <div class="minigame-top-bar">
+          <h2 class="minigame-title">
+            <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>
+            ¿QUIÉN ES ESE POKÉMON?
           </h2>
-          <p class="gacha-sub">Extrae especímenes de la red de laboratorios del Team Rocket.</p>
-          <div class="gacha-rates-badge">
-            <span>Común: 60%</span> | <span>Raro: 28%</span> | <span style="color:var(--accent-blue);">Épico: 9%</span> | <span style="color:var(--accent-yellow);">Legendario: 3%</span>
+          <div class="score-pill">
+            <span>RACHA: <strong id="quiz-streak">0</strong></span> | <span>RÉCORD: <strong id="quiz-best">0</strong></span>
           </div>
         </div>
 
-        <div class="gacha-machine-stage">
-          <div class="gacha-orb" id="gacha-visual-orb">
-            <div class="orb-ring"></div>
-            <div class="orb-core">R</div>
+        <div class="silhouette-display-box">
+          <img class="silhouette-img" id="quiz-silhouette-img" src="" alt="Misterio" />
+        </div>
+
+        <div class="quiz-status-line" id="quiz-status-msg">
+          ¡Adivina el Pokémon antes de que se acabe el tiempo!
+        </div>
+
+        <div class="quiz-choices-grid" id="quiz-options-container">
+          <!-- 4 Botones de opciones -->
+        </div>
+
+        <div class="minigame-footer">
+          <button class="retro-btn" id="btn-next-quiz">Siguiente Pokémon</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================================
+         VISTA 4: MINIJUEGO 2 - CASINO ROCKET (SLOTS)
+         ======================================================== -->
+    <div class="app-view" id="view-casino">
+      <div class="minigame-card-wrapper">
+        <div class="minigame-top-bar">
+          <h2 class="minigame-title">
+            <svg class="icon" viewBox="0 0 24 24"><rect height="18" rx="2" width="18" x="3" y="3"/><circle cx="8.5" cy="8.5" r="1.5"/><circle cx="15.5" cy="8.5" r="1.5"/><circle cx="15.5" cy="15.5" r="1.5"/><circle cx="8.5" cy="15.5" r="1.5"/></svg>
+            CASINO ROCKET • TRAGAPERRAS
+          </h2>
+          <div class="score-pill">
+            <span>FICHAS: <strong id="casino-coins" style="color:var(--accent-yellow);">150</strong></span>
           </div>
         </div>
 
-        <div class="gacha-actions-bar">
-          <button class="btn-gacha-pull" id="btn-pull-1">
-            <svg class="icon" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-            Tirada x1
+        <!-- MÁQUINA DE 3 RODILLOS -->
+        <div class="slot-machine-cabinet">
+          <div class="slot-reel-frame">
+            <div class="slot-reel" id="reel-1"><span class="reel-symbol">R</span></div>
+            <div class="slot-reel" id="reel-2"><span class="reel-symbol">R</span></div>
+            <div class="slot-reel" id="reel-3"><span class="reel-symbol">R</span></div>
+          </div>
+        </div>
+
+        <div class="quiz-status-line" id="casino-status-msg">
+          ¡Haz tu apuesta y gira los rodillos de la fortuna Rocket!
+        </div>
+
+        <div class="casino-controls-bar">
+          <div class="bet-selector">
+            <span style="font-size:0.8rem; color:var(--text-muted); font-weight:700;">APUESTA:</span>
+            <button class="bet-btn active" data-bet="10">10</button>
+            <button class="bet-btn" data-bet="25">25</button>
+            <button class="bet-btn" data-bet="50">50</button>
+          </div>
+          <button class="btn-spin-slots" id="btn-spin">
+            <svg class="icon" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+            ¡GIRAR!
           </button>
-          <button class="btn-gacha-pull multi" id="btn-pull-10">
-            <svg class="icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-            Tirada x10 (Garantizado Raro+)
-          </button>
         </div>
 
-        <!-- HISTORIAL DE OBTENIDOS -->
-        <div class="gacha-history-section">
-          <h3 class="gacha-history-title">Colección de Invocaciones Recientes:</h3>
-          <div class="gacha-cards-grid" id="gacha-results-grid">
-            <div class="empty-gacha-text">Aún no has invocado Pokémon. ¡Haz una tirada!</div>
-          </div>
+        <div class="payout-table-card">
+          <div class="payout-item"><span>Triple R (Rocket)</span> <strong>x25 Fichas</strong></div>
+          <div class="payout-item"><span>Triple 7 (Jackpot)</span> <strong>x15 Fichas</strong></div>
+          <div class="payout-item"><span>Triple Pokéball</span> <strong>x10 Fichas</strong></div>
+          <div class="payout-item"><span>Par de Símbolos</span> <strong>x2 Fichas</strong></div>
         </div>
       </div>
     </div>
 
   </main>
 
-  <!-- MODAL DETALLES GENERADOR -->
+  <!-- MODAL DETALLES DEL GENERADOR -->
   <div class="modal-backdrop" id="poke-modal">
     <div class="modal-box">
       <button class="modal-close" id="modal-close-btn">
@@ -320,13 +363,13 @@
     </div>
   </div>
 
-  <!-- TOAST -->
+  <!-- TOAST NOTIFICACIÓN -->
   <div class="toast" id="toast">
     <svg class="icon" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
     <span id="toast-msg">Reporte copiado con éxito.</span>
   </div>
 
-  <!-- LOADING SPINNER -->
+  <!-- SPINNER DE CARGA -->
   <div class="loading-overlay" id="loading">
     <div class="pokeball-spinner"></div>
     <div class="loading-text">DESPLEGANDO ESCUADRÓN ROCKET...</div>
