@@ -34,7 +34,7 @@ function playVictory() {
 }
 
 // ========================================================
-// ICONOS VECTORIALES DE TIPOS ELEMENTALES
+// ICONOS DE TIPOS VECTORIALES (SIN EMOJIS)
 // ========================================================
 const TYPE_SVG_ICONS = {
   fire: `<svg viewBox="0 0 24 24"><path d="M12 2c-.5 2-2 4-3 6-1.5 3-1 6 1 8.5 2 2.5 5 2.5 7 0 2-2.5 2.5-5.5 1-8.5-1-2-2.5-4-3-6-1 2-2 3-3 3s-2-1-3-3z"/></svg>`,
@@ -63,20 +63,22 @@ function renderTypeBadge(type) {
 }
 
 // ========================================================
-// SISTEMA DE PESTAÑAS (Generador, Roguelike, Gacha)
+// SISTEMA DE NAVEGACIÓN (TABS)
 // ========================================================
 const tabGen = document.getElementById('btn-tab-gen');
 const tabRogue = document.getElementById('btn-tab-rogue');
-const tabGacha = document.getElementById('btn-tab-gacha');
+const tabQuiz = document.getElementById('btn-tab-quiz');
+const tabCasino = document.getElementById('btn-tab-casino');
 
 const viewGen = document.getElementById('view-generator');
 const viewRogue = document.getElementById('view-battle');
-const viewGacha = document.getElementById('view-gacha');
+const viewQuiz = document.getElementById('view-quiz');
+const viewCasino = document.getElementById('view-casino');
 
 function setTab(tabName) {
   playClick();
-  [tabGen, tabRogue, tabGacha].forEach(b => b.classList.remove('active'));
-  [viewGen, viewRogue, viewGacha].forEach(v => v.classList.remove('active'));
+  [tabGen, tabRogue, tabQuiz, tabCasino].forEach(b => b.classList.remove('active'));
+  [viewGen, viewRogue, viewQuiz, viewCasino].forEach(v => v.classList.remove('active'));
 
   if (tabName === 'gen') {
     tabGen.classList.add('active');
@@ -87,27 +89,34 @@ function setTab(tabName) {
     viewRogue.classList.add('active');
     window.location.hash = 'rogue';
     initTowerMatch();
-  } else if (tabName === 'gacha') {
-    tabGacha.classList.add('active');
-    viewGacha.classList.add('active');
-    window.location.hash = 'gacha';
+  } else if (tabName === 'quiz') {
+    tabQuiz.classList.add('active');
+    viewQuiz.classList.add('active');
+    window.location.hash = 'quiz';
+    initSilhouetteQuiz();
+  } else if (tabName === 'casino') {
+    tabCasino.classList.add('active');
+    viewCasino.classList.add('active');
+    window.location.hash = 'casino';
   }
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 tabGen.addEventListener('click', () => setTab('gen'));
 tabRogue.addEventListener('click', () => setTab('rogue'));
-tabGacha.addEventListener('click', () => setTab('gacha'));
+tabQuiz.addEventListener('click', () => setTab('quiz'));
+tabCasino.addEventListener('click', () => setTab('casino'));
 document.getElementById('brand-logo').addEventListener('click', () => setTab('gen'));
 
 if (window.location.hash === '#rogue') setTab('rogue');
-if (window.location.hash === '#gacha') setTab('gacha');
+if (window.location.hash === '#quiz') setTab('quiz');
+if (window.location.hash === '#casino') setTab('casino');
 
 // ========================================================
 // MOTOR ROGUELIKE INFINITO (CON MUERTE PERMANENTE)
 // ========================================================
 let towerFloor = 1;
-let playerParty = []; // Máximo 3 miembros
+let playerParty = [];
 let pActiveIdx = 0;
 let enemyPokemon = null;
 let battleBusy = false;
@@ -151,7 +160,6 @@ async function fetchTowerPokemon(floor = 1) {
 async function initTowerMatch() {
   document.getElementById('rogue-reward-screen').style.display = 'none';
 
-  // Si no hay sobrevivientes, iniciar desde el Piso 1
   if (playerParty.length === 0 || towerFloor === 1) {
     towerFloor = 1;
     playerParty = [];
@@ -396,7 +404,7 @@ async function attackStep(atk, def, move, atkSide, defSide) {
   await sleep(700);
 }
 
-// COMPROBACIÓN DE MUERTE PERMANENTE (PERMADEATH)
+// PERMADEATH (MUERTE PERMANENTE)
 async function checkFaintStatus() {
   const p = playerParty[pActiveIdx];
 
@@ -404,13 +412,10 @@ async function checkFaintStatus() {
   if (p && p.hp <= 0) {
     playBeep(100, 'sawtooth', 0.4);
     setDialog(`¡${p.name.toUpperCase()} ha caído y se ha perdido para siempre!`);
-    
-    // Eliminarlo de tu equipo permanentemente
     playerParty.splice(pActiveIdx, 1);
     updateBalls();
     await sleep(1000);
 
-    // Si aún tienes sobrevivientes en tu equipo:
     if (playerParty.length > 0) {
       pActiveIdx = 0;
       setDialog(`¡Solo te quedan ${playerParty.length} Pokémon! ¡Adelante ${playerParty[pActiveIdx].name.toUpperCase()}!`);
@@ -418,7 +423,6 @@ async function checkFaintStatus() {
       updateBalls();
       battleBusy = false;
     } else {
-      // Si todos tus Pokémon murieron: Fin del juego
       showGameOverScreen();
     }
     return;
@@ -506,7 +510,7 @@ async function showVictoryRewardDraft() {
     container.appendChild(card);
   });
 
-  // Opción descansar y curar
+  // Opción curar
   const healCard = document.createElement('div');
   healCard.className = 'reward-choice-card';
   healCard.style.borderColor = '#F59E0B';
@@ -554,91 +558,197 @@ function advanceNextFloor() {
 document.getElementById('tower-restart-btn').addEventListener('click', restartEntireGame);
 
 // ========================================================
-// NUEVA SECCIÓN: MÁQUINA GACHA POKÉMON ROCKET
+// MINIJUEGO 1: ¿QUIÉN ES ESE POKÉMON? (SILUETA)
 // ========================================================
-const LEGENDARY_IDS = [144,145,146,150,151,243,244,245,249,250,251,382,383,384,385,386,483,484,487,493,643,644,646,716,717,718,789,790,791,792,800,888,889,890,1007,1008];
-const EPIC_IDS = [149, 248, 282, 373, 376, 445, 448, 635, 706, 778, 884, 887, 998, 1000];
+let quizStreak = 0;
+let quizBest = 0;
+let currentQuizPokemon = null;
+let quizBusy = false;
 
-let gachaHistory = [];
-let gachaBusy = false;
+async function initSilhouetteQuiz() {
+  if (quizBusy) return;
+  quizBusy = true;
+  const imgEl = document.getElementById('quiz-silhouette-img');
+  const msgEl = document.getElementById('quiz-status-msg');
+  const optionsEl = document.getElementById('quiz-options-container');
 
-async function pullSingleGacha() {
-  const roll = Math.random() * 100;
-  let chosenId = 1;
-  let rarity = 'common';
-
-  if (roll < 3) {
-    rarity = 'legendary';
-    chosenId = LEGENDARY_IDS[Math.floor(Math.random() * LEGENDARY_IDS.length)];
-  } else if (roll < 12) {
-    rarity = 'epic';
-    chosenId = EPIC_IDS[Math.floor(Math.random() * EPIC_IDS.length)];
-  } else if (roll < 40) {
-    rarity = 'rare';
-    chosenId = Math.floor(Math.random() * 800) + 1;
-  } else {
-    rarity = 'common';
-    chosenId = Math.floor(Math.random() * 1020) + 1;
-  }
-
-  const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${chosenId}`);
-  const data = await res.json();
-
-  return {
-    name: data.name,
-    rarity: rarity,
-    sprite: data.sprites.other['official-artwork'].front_default || data.sprites.front_default,
-    types: data.types.map(t => t.type.name)
-  };
-}
-
-async function executeGachaPull(count) {
-  if (gachaBusy) return;
-  gachaBusy = true;
-  playClick();
-
-  const orb = document.getElementById('gacha-visual-orb');
-  orb.classList.add('pulling');
-  playBeep(440, 'sawtooth', 0.5);
+  msgEl.innerText = "Preparando silueta misteriosa...";
+  imgEl.classList.remove('revealed');
+  optionsEl.innerHTML = "";
 
   try {
-    const promises = [];
-    for (let i = 0; i < count; i++) promises.push(pullSingleGacha());
-    const results = await Promise.all(promises);
+    const correctId = Math.floor(Math.random() * 850) + 1;
+    const wrongIds = [];
+    while (wrongIds.length < 3) {
+      const rId = Math.floor(Math.random() * 850) + 1;
+      if (rId !== correctId && !wrongIds.includes(rId)) wrongIds.push(rId);
+    }
 
-    await sleep(700);
-    orb.classList.remove('pulling');
+    const [correctData, ...wrongDataList] = await Promise.all([
+      fetch(`https://pokeapi.co/api/v2/pokemon/${correctId}`).then(r => r.json()),
+      ...wrongIds.map(id => fetch(`https://pokeapi.co/api/v2/pokemon/${id}`).then(r => r.json()))
+    ]);
 
-    results.forEach(item => gachaHistory.unshift(item));
-    renderGachaCollection();
-    playVictory();
+    currentQuizPokemon = correctData;
+    const sprite = correctData.sprites.other['official-artwork'].front_default || correctData.sprites.front_default;
+    imgEl.src = sprite;
+
+    const allChoices = [
+      { name: correctData.name, isCorrect: true },
+      ...wrongDataList.map(p => ({ name: p.name, isCorrect: false }))
+    ].sort(() => Math.random() - 0.5);
+
+    optionsEl.innerHTML = "";
+    allChoices.forEach(choice => {
+      const btn = document.createElement('button');
+      btn.className = 'quiz-btn';
+      btn.innerText = choice.name.replace('-', ' ');
+      btn.onclick = () => handleQuizAnswer(choice, btn);
+      optionsEl.appendChild(btn);
+    });
+
+    msgEl.innerText = "¿Quién es ese Pokémon? ¡Elige la respuesta correcta!";
+    playBeep(440, 'triangle', 0.15);
   } catch(e) {
-    console.error(e);
+    msgEl.innerText = "Error cargando silueta. Pulsa 'Siguiente Pokémon'.";
   } finally {
-    gachaBusy = false;
-    orb.classList.remove('pulling');
+    quizBusy = false;
   }
 }
 
-function renderGachaCollection() {
-  const grid = document.getElementById('gacha-results-grid');
-  grid.innerHTML = '';
+async function handleQuizAnswer(choice, clickedBtn) {
+  if (quizBusy) return;
+  quizBusy = true;
 
-  gachaHistory.forEach(item => {
-    const card = document.createElement('div');
-    card.className = `gacha-item-card ${item.rarity}`;
-    card.innerHTML = `
-      <span class="gacha-rarity-tag ${item.rarity}">${item.rarity}</span>
-      <img src="${item.sprite}" />
-      <strong style="text-transform:capitalize; display:block; font-size:0.85rem;">${item.name}</strong>
-      <div style="margin-top:4px;">${item.types.map(t => renderTypeBadge(t)).join('')}</div>
-    `;
-    grid.appendChild(card);
-  });
+  const imgEl = document.getElementById('quiz-silhouette-img');
+  const msgEl = document.getElementById('quiz-status-msg');
+  const allBtns = document.querySelectorAll('.quiz-btn');
+  allBtns.forEach(b => b.disabled = true);
+
+  imgEl.classList.add('revealed');
+
+  if (choice.isCorrect) {
+    clickedBtn.classList.add('correct');
+    quizStreak++;
+    if (quizStreak > quizBest) quizBest = quizStreak;
+    document.getElementById('quiz-streak').innerText = quizStreak;
+    document.getElementById('quiz-best').innerText = quizBest;
+    playVictory();
+    msgEl.innerText = `¡Correcto! ¡Es ${currentQuizPokemon.name.toUpperCase()}!`;
+  } else {
+    clickedBtn.classList.add('wrong');
+    quizStreak = 0;
+    document.getElementById('quiz-streak').innerText = 0;
+    playBeep(120, 'sawtooth', 0.35);
+    msgEl.innerText = `¡Incorrecto! Era ${currentQuizPokemon.name.toUpperCase()}.`;
+    allBtns.forEach(b => {
+      if (b.innerText.toLowerCase() === currentQuizPokemon.name.replace('-', ' ').toLowerCase()) {
+        b.classList.add('correct');
+      }
+    });
+  }
+
+  quizBusy = false;
 }
 
-document.getElementById('btn-pull-1').addEventListener('click', () => executeGachaPull(1));
-document.getElementById('btn-pull-10').addEventListener('click', () => executeGachaPull(10));
+document.getElementById('btn-next-quiz').addEventListener('click', () => {
+  playClick();
+  initSilhouetteQuiz();
+});
+
+// ========================================================
+// MINIJUEGO 2: CASINO ROCKET (SLOTS / TRAGAPERRAS)
+// ========================================================
+let casinoCoins = 150;
+let currentBet = 10;
+let spinningCasino = false;
+
+const SLOT_SYMBOLS = [
+  { id: 'rocket', label: 'R', mult: 25 },
+  { id: 'seven', label: '7', mult: 15 },
+  { id: 'ball', svg: TYPE_SVG_ICONS.normal, mult: 10 },
+  { id: 'pikachu', svg: TYPE_SVG_ICONS.electric, mult: 8 },
+  { id: 'voltorb', svg: TYPE_SVG_ICONS.poison, mult: 0 }
+];
+
+document.querySelectorAll('.bet-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    playClick();
+    document.querySelectorAll('.bet-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentBet = parseInt(btn.getAttribute('data-bet'));
+  });
+});
+
+document.getElementById('btn-spin').addEventListener('click', async () => {
+  if (spinningCasino) return;
+  if (casinoCoins < currentBet) {
+    playBeep(100, 'sawtooth', 0.3);
+    document.getElementById('casino-status-msg').innerText = "¡No tienes suficientes fichas! El Casino Rocket te presta 50 fichas.";
+    casinoCoins += 50;
+    document.getElementById('casino-coins').innerText = casinoCoins;
+    return;
+  }
+
+  spinningCasino = true;
+  casinoCoins -= currentBet;
+  document.getElementById('casino-coins').innerText = casinoCoins;
+  document.getElementById('casino-status-msg').innerText = "¡Los rodillos están girando...!";
+  playBeep(330, 'square', 0.1);
+
+  const reels = [
+    document.getElementById('reel-1'),
+    document.getElementById('reel-2'),
+    document.getElementById('reel-3')
+  ];
+
+  reels.forEach(r => r.classList.add('spinning'));
+
+  for (let i = 0; i < 8; i++) {
+    playBeep(200 + (i * 40), 'triangle', 0.05);
+    await sleep(90);
+  }
+
+  const finalSymbols = [
+    SLOT_SYMBOLS[Math.floor(Math.random() * SLOT_SYMBOLS.length)],
+    SLOT_SYMBOLS[Math.floor(Math.random() * SLOT_SYMBOLS.length)],
+    SLOT_SYMBOLS[Math.floor(Math.random() * SLOT_SYMBOLS.length)]
+  ];
+
+  reels.forEach((reel, idx) => {
+    reel.classList.remove('spinning');
+    const sym = finalSymbols[idx];
+    reel.innerHTML = sym.svg 
+      ? `<span class="reel-symbol">${sym.svg}</span>`
+      : `<span class="reel-symbol" style="color:var(--rocket-red);">${sym.label}</span>`;
+  });
+
+  // Comprobar premio
+  const [s1, s2, s3] = finalSymbols;
+  const statusMsg = document.getElementById('casino-status-msg');
+
+  if (s1.id === s2.id && s2.id === s3.id) {
+    if (s1.id === 'voltorb') {
+      playBeep(90, 'sawtooth', 0.5);
+      statusMsg.innerText = "¡BOOM! ¡Triple Voltorb autodestrucción! No ganas nada.";
+    } else {
+      const win = currentBet * s1.mult;
+      casinoCoins += win;
+      playVictory();
+      statusMsg.innerText = `¡JACKPOT! ¡Triple ${s1.id.toUpperCase()}! Ganaste ${win} fichas.`;
+    }
+  } else if (s1.id === s2.id || s2.id === s3.id || s1.id === s3.id) {
+    const win = currentBet * 2;
+    casinoCoins += win;
+    playBeep(580, 'square', 0.15);
+    statusMsg.innerText = `¡Par coincidente! Ganaste ${win} fichas.`;
+  } else {
+    statusMsg.innerText = "¡Mala suerte! Sigue intentándolo.";
+  }
+
+  document.getElementById('casino-coins').innerText = casinoCoins;
+  spinningCasino = false;
+});
 
 // ========================================================
 // GENERADOR DE EQUIPOS (ULTRARRÁPIDO)
@@ -839,5 +949,4 @@ document.getElementById('theme-toggle').addEventListener('click', () => {
   document.body.setAttribute('data-theme', isDark ? 'dark' : 'light');
 });
 
-// INICIO
 generateFullTeam();
