@@ -1,26 +1,25 @@
 :root {
-  --bg-body: #0C0F17;
-  --bg-card: #151A26;
-  --bg-panel: #151A26;
+  --bg-body: #080A10;
+  --bg-card: #111622;
+  --bg-panel: #111622;
   --text-main: #F8FAFC;
   --text-muted: #8E9BAE;
-  --border-color: #2D3748;
+  --border-color: #263043;
   --rocket-red: #E11D48;
-  --rocket-dark: #07090E;
+  --rocket-dark: #05060A;
   --accent-yellow: #F59E0B;
   --accent-blue: #3B82F6;
   --accent-green: #10B981;
-  --shadow-color: rgba(0, 0, 0, 0.6);
+  --shadow-color: rgba(0, 0, 0, 0.7);
   
-  /* Colores Retro GBA */
-  --gba-box-bg: #4B6E70;
+  --gba-box-bg: #2B4546;
   --gba-box-border: #D86B27;
   --hud-bg: #EAE6D2;
   --hud-border: #38342E;
 }
 
 [data-theme='light'] {
-  --bg-body: #ECEFF4;
+  --bg-body: #EDF1F7;
   --bg-card: #FFFFFF;
   --bg-panel: #FFFFFF;
   --text-main: #1A202C;
@@ -30,13 +29,12 @@
   --shadow-color: rgba(0, 0, 0, 0.12);
 }
 
-/* FUENTE PIXEL ART EN TODA LA WEB */
+/* FUENTE PIXEL ART GLOBAL */
 body, button, input, select, textarea {
   font-family: 'Pixelify Sans', 'Press Start 2P', sans-serif;
   letter-spacing: 0.5px;
 }
 
-/* SCROLLBAR RETRO */
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track { background: var(--bg-body); border-left: 2px solid var(--border-color); }
 ::-webkit-scrollbar-thumb {
@@ -44,11 +42,7 @@ body, button, input, select, textarea {
   border: 2px solid var(--bg-body);
 }
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
   background-color: var(--bg-body);
@@ -145,7 +139,7 @@ body {
 .app-view.active { display: block; }
 
 /* ========================================================
-   TORRE DE BATALLA RETRO (ESTILO IMÁGENES 1, 2 Y 3)
+   MODO ROGUELIKE: ARENA CUEVA GBA / DS
    ======================================================== */
 .tower-wrapper {
   background: #000;
@@ -153,7 +147,7 @@ body {
   border-radius: 16px;
   padding: 16px;
   box-shadow: 8px 8px 0px rgba(0,0,0,0.8);
-  max-width: 920px;
+  max-width: 960px;
   margin: 0 auto;
 }
 
@@ -172,9 +166,6 @@ body {
   font-family: 'Press Start 2P', cursive;
   font-size: 0.8rem;
   color: var(--accent-yellow);
-  display: flex;
-  align-items: center;
-  gap: 8px;
 }
 
 .tower-rank-txt {
@@ -195,113 +186,79 @@ body {
 }
 .retro-btn:hover { background: var(--rocket-red); border-color: white; }
 
-/* ESCENARIO DE BATALLA (Fondo boscoso como la Imagen 1) */
+/* ARENA GRANDE CON FONDO DE CUEVA */
 .retro-battle-arena {
-  height: 380px;
+  height: 500px;
   position: relative;
   overflow: hidden;
   border: 3px solid #000;
   border-radius: 12px;
-  background: linear-gradient(180deg, #102636 0%, #1e453e 50%, #2f6943 100%);
-  background-size: cover;
-  box-shadow: inset 0 0 40px rgba(0,0,0,0.8);
+  background: #050608 url('bg.png') no-repeat center center;
+  background-size: 100% 100%;
+  box-shadow: inset 0 0 50px rgba(0,0,0,0.9);
 }
 
-/* Árboles siluetas de fondo */
-.retro-battle-arena::before {
-  content: '';
-  position: absolute;
-  bottom: 120px;
-  left: 0;
-  right: 0;
-  height: 90px;
-  background: radial-gradient(ellipse at bottom, #0f3027 40%, transparent 70%);
-  opacity: 0.7;
-}
-
-/* UNIDAD RIVAL (ARRIBA DERECHA) */
+/* RIVAL EN EL CRÁTER DERECHO */
 .battle-unit-enemy {
   position: absolute;
-  top: 20px;
-  left: 20px;
-  right: 20px;
-  height: 150px;
+  top: 15px;
+  left: 15px;
+  right: 15px;
+  height: 220px;
 }
 
 .platform-enemy {
   position: absolute;
-  right: 40px;
-  top: 30px;
-  width: 170px;
-  height: 70px;
+  right: 15%;
+  top: 48%;
+  width: 150px;
+  height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.grass-oval {
-  width: 100%;
-  height: 100%;
-  background: #5CA368;
-  border: 3px solid #2B5733;
-  border-radius: 50%;
-  box-shadow: inset 0 -4px 0 #3b7444;
-}
-
-.battle-unit-enemy .battle-sprite {
-  position: absolute;
-  bottom: 15px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 125px;
-  height: 125px;
+.platform-enemy .battle-sprite {
+  max-width: 140px;
+  max-height: 140px;
   object-fit: contain;
-  filter: drop-shadow(0 6px 8px rgba(0,0,0,0.6));
+  filter: drop-shadow(0 12px 10px rgba(0,0,0,0.8));
 }
 
-/* HUD ENEMIGO (ESTILO IMAGEN 2 Y 3) */
 .hud-enemy {
   position: absolute;
-  top: 5px;
+  top: 10px;
   left: 15px;
   width: 250px;
 }
 
-/* UNIDAD JUGADOR (ABAJO IZQUIERDA) */
+/* JUGADOR EN EL CRÁTER IZQUIERDO */
 .battle-unit-player {
   position: absolute;
   bottom: 15px;
-  left: 20px;
-  right: 20px;
-  height: 160px;
+  left: 15px;
+  right: 15px;
+  height: 220px;
 }
 
 .platform-player {
   position: absolute;
-  left: 30px;
-  bottom: 0px;
-  width: 220px;
-  height: 80px;
+  left: 14%;
+  bottom: 8%;
+  width: 180px;
+  height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.grass-oval-large {
-  width: 100%;
-  height: 100%;
-  background: #6CB879;
-  border: 4px solid #2B5733;
-  border-radius: 50%;
-  box-shadow: inset 0 -5px 0 #468653;
-}
-
-.battle-unit-player .battle-sprite {
-  position: absolute;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 145px;
-  height: 145px;
+.platform-player .battle-sprite {
+  max-width: 170px;
+  max-height: 170px;
   object-fit: contain;
-  filter: drop-shadow(0 8px 8px rgba(0,0,0,0.6));
+  filter: drop-shadow(0 14px 12px rgba(0,0,0,0.85));
 }
 
-/* HUD JUGADOR (ESTILO IMAGEN 2 Y 3) */
 .hud-player {
   position: absolute;
   bottom: 10px;
@@ -309,7 +266,7 @@ body {
   width: 270px;
 }
 
-/* CAJAS DE ESTADO (ESTILO GBA / POKÉMON RUBY/EMERALD) */
+/* HUD RETRO */
 .pokemon-hud {
   background: var(--hud-bg);
   border: 3px solid var(--hud-border);
@@ -323,31 +280,16 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 4px;
   font-weight: 700;
   font-size: 1rem;
 }
 
-.poke-name-hud {
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.gender-sym {
-  font-weight: 900;
-  font-size: 1.1rem;
-}
-.gender-sym:empty { display: none; }
+.poke-name-hud { text-transform: uppercase; }
+.gender-sym { font-weight: 900; font-size: 1.1rem; }
 #e-gender { color: #1E40AF; }
 #p-gender { color: #BE185D; }
+.poke-level-hud { font-family: 'Press Start 2P', cursive; font-size: 0.65rem; color: #4A443A; }
 
-.poke-level-hud {
-  font-family: 'Press Start 2P', cursive;
-  font-size: 0.65rem;
-  color: #4A443A;
-}
-
-/* BARRA DE VIDA (HP) */
 .hp-gauge-container {
   display: flex;
   align-items: center;
@@ -355,16 +297,10 @@ body {
   background: #3B3831;
   padding: 3px 6px;
   border-radius: 6px;
-  margin-bottom: 4px;
+  margin: 4px 0;
 }
 
-.hp-tag {
-  color: #FBBF24;
-  font-weight: 900;
-  font-size: 0.75rem;
-  line-height: 1;
-}
-
+.hp-tag { color: #FBBF24; font-weight: 900; font-size: 0.75rem; }
 .hp-bar-bg {
   flex-grow: 1;
   height: 8px;
@@ -381,46 +317,9 @@ body {
   transition: width 0.4s ease, background-color 0.4s ease;
 }
 
-.hp-numbers-hud {
-  text-align: right;
-  font-weight: 700;
-  font-size: 0.85rem;
-  color: #2B2823;
-  margin-bottom: 2px;
-}
+.hp-numbers-hud { text-align: right; font-weight: 700; font-size: 0.85rem; color: #2B2823; }
 
-/* BARRA DE EXP */
-.exp-gauge-container {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  height: 6px;
-  background: #4B463C;
-  border-radius: 3px;
-  padding: 1px;
-}
-
-.exp-tag {
-  font-size: 0.55rem;
-  font-weight: 900;
-  color: #F59E0B;
-  line-height: 1;
-}
-
-.exp-bar-fill {
-  height: 100%;
-  width: 65%;
-  background: #3B82F6;
-  border-radius: 2px;
-}
-
-/* BOLITAS DE POKÉBALL DEL EQUIPO (3 vs 3) */
-.party-balls {
-  display: flex;
-  gap: 4px;
-  margin-top: 5px;
-}
-
+.party-balls { display: flex; gap: 4px; margin-top: 5px; }
 .pkball {
   width: 10px;
   height: 10px;
@@ -428,12 +327,12 @@ body {
   background: var(--rocket-red);
   border: 1px solid #000;
 }
-.pkball.fainted { background: #6B7280; opacity: 0.4; }
+.pkball.fainted { background: #6B7280; opacity: 0.3; }
 
-/* CUADRO DE DIÁLOGO Y COMANDOS (ESTILO IMAGEN 2 GBA) */
+/* DIÁLOGO Y BOTONES GBA */
 .retro-textbox-wrapper {
   margin-top: 12px;
-  background: #2B4546;
+  background: var(--gba-box-bg);
   border: 4px solid var(--gba-box-border);
   border-radius: 8px;
   display: flex;
@@ -443,7 +342,7 @@ body {
 
 .retro-dialog-pane {
   flex: 1.1;
-  padding: 18px;
+  padding: 16px;
   color: white;
   font-size: 1.15rem;
   line-height: 1.5;
@@ -462,7 +361,6 @@ body {
   justify-content: center;
 }
 
-/* MENÚ PRINCIPAL 2x2 GBA (FIGHT, BAG, POKÉMON, RUN) */
 .main-command-menu {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -479,25 +377,18 @@ body {
   color: white;
   cursor: pointer;
   text-shadow: 1px 1px 0px #000;
-  box-shadow: inset 0 -3px 0 rgba(0,0,0,0.3);
 }
 
 .cmd-fight { background: #E0505A; border-color: #8C2229; }
 .cmd-fight:hover { background: #FF6671; }
-
 .cmd-bag { background: #E58C36; border-color: #8C4E15; }
 .cmd-bag:hover { background: #FFA347; }
-
 .cmd-poke { background: #43A047; border-color: #1F5422; }
 .cmd-poke:hover { background: #56B85A; }
-
 .cmd-run { background: #3B7FB9; border-color: #1A4468; }
 .cmd-run:hover { background: #4E9AD8; }
 
-/* MENÚ SUB-ATAQUES */
-.moves-command-menu, .switch-party-menu {
-  width: 100%;
-}
+.moves-command-menu, .switch-party-menu { width: 100%; }
 
 .moves-grid-sub {
   display: grid;
@@ -525,13 +416,12 @@ body {
   color: white;
   border: 2px solid #000;
   border-radius: 6px;
-  padding: 5px;
+  padding: 6px;
   font-weight: 700;
   font-size: 0.75rem;
   cursor: pointer;
 }
 
-/* LISTA DE CAMBIO DE POKÉMON */
 .party-switch-list {
   display: flex;
   flex-direction: column;
@@ -553,7 +443,74 @@ body {
 .switch-poke-row:hover:not(.fainted) { background: #4B5563; border-color: var(--accent-green); }
 .switch-poke-row.fainted { opacity: 0.4; cursor: not-allowed; }
 
-/* ANIMACIONES DE COMBATE */
+/* RECOMPENSAS ROGUELIKE & MOCHILA */
+.rogue-reward-screen, .bag-screen {
+  position: absolute;
+  inset: 0;
+  background: rgba(5, 7, 12, 0.88);
+  backdrop-filter: blur(4px);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.reward-card-box, .bag-box {
+  background: #111827;
+  border: 3px solid #F59E0B;
+  border-radius: 12px;
+  padding: 20px;
+  max-width: 550px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.8);
+}
+
+.reward-title {
+  font-family: 'Press Start 2P', cursive;
+  font-size: 0.95rem;
+  color: #F59E0B;
+  margin-bottom: 8px;
+}
+
+.reward-subtitle {
+  font-size: 0.85rem;
+  color: #94A3B8;
+  margin-bottom: 18px;
+}
+
+.rewards-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.reward-choice-card {
+  background: #1F2937;
+  border: 2px solid #374151;
+  border-radius: 10px;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.reward-choice-card:hover {
+  border-color: #10B981;
+  transform: translateY(-3px);
+  background: #283548;
+}
+
+.reward-choice-card img {
+  width: 75px;
+  height: 75px;
+  object-fit: contain;
+  margin: 6px 0;
+}
+
+/* ANIMACIONES */
 .anim-shake { animation: pkShake 0.35s ease; }
 @keyframes pkShake {
   0%, 100% { transform: translateX(0); }
@@ -568,7 +525,7 @@ body {
 @keyframes pkAtkE { 50% { transform: translate(-30px, 20px) scale(1.1); } }
 
 /* ========================================================
-   ESTILOS DEL GENERADOR DE EQUIPOS
+   ESTILOS DEL GENERADOR
    ======================================================== */
 .tactical-wrapper {
   background: var(--bg-panel);
@@ -598,6 +555,8 @@ body {
   align-items: center;
   gap: 8px;
 }
+
+#team-rank { font-weight: 800; font-size: 0.8rem; color: var(--accent-yellow); }
 
 .tactical-grid {
   display: grid;
@@ -749,7 +708,6 @@ body {
   gap: 8px;
 }
 
-/* CARDS POKÉMON */
 .team-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
@@ -838,7 +796,7 @@ body {
 .stat-bar { flex-grow: 1; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; margin: 0 8px; }
 .stat-val { width: 28px; text-align: right; font-weight: 700; }
 
-/* COLORES DE TIPOS */
+/* TIPOS ELEMENTALES */
 .type-normal, .t-normal { background: #9da0a2; }
 .type-fire, .t-fire { background: #e03a3a; }
 .type-water, .t-water { background: #2f7cf6; }
@@ -957,356 +915,13 @@ body {
 .loading-text { color: white; margin-top: 15px; font-family: 'Press Start 2P', cursive; font-size: 0.75rem; }
 
 @media(max-width: 700px) {
+  .retro-battle-arena { height: 420px; }
   .retro-textbox-wrapper { flex-direction: column; }
   .retro-dialog-pane { border-right: none; border-bottom: 4px solid var(--gba-box-border); min-height: 80px; }
   .hud-enemy { width: 190px; }
   .hud-player { width: 210px; }
-  .battle-unit-player .battle-sprite { width: 110px; height: 110px; }
-  .battle-unit-enemy .battle-sprite { width: 95px; height: 95px; }
-}
-/* ========================================================
-   FIX: ESCENARIO RETRO, HUD Y PLATAFORMAS (ESTILO GBA/DS)
-   ======================================================== */
-.tower-wrapper {
-  background: #000000 !important;
-  border: 4px solid #2D3748 !important;
-  border-radius: 16px !important;
-  padding: 16px !important;
-  max-width: 900px !important;
-  margin: 0 auto !important;
-}
-
-.tower-header-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 12px;
-  padding-bottom: 10px;
-  border-bottom: 3px solid #2D3748;
-}
-
-.tower-stage-badge {
-  font-family: 'Press Start 2P', cursive;
-  font-size: 0.8rem;
-  color: #F59E0B;
-}
-
-.tower-rank-txt {
-  font-family: 'Press Start 2P', cursive;
-  font-size: 0.75rem;
-  color: #E11D48;
-}
-
-/* ESCENARIO DEL BOSQUE */
-.retro-battle-arena {
-  height: 380px !important;
-  position: relative !important;
-  overflow: hidden !important;
-  border: 3px solid #000 !important;
-  border-radius: 12px !important;
-  background: linear-gradient(180deg, #102636 0%, #1e453e 50%, #2f6943 100%) !important;
-}
-
-/* UNIDAD RIVAL (ARRIBA DERECHA) */
-.battle-unit-enemy {
-  position: absolute !important;
-  top: 15px !important;
-  left: 15px !important;
-  right: 15px !important;
-  height: 150px !important;
-}
-
-.platform-enemy {
-  position: absolute !important;
-  right: 40px !important;
-  top: 40px !important;
-  width: 170px !important;
-  height: 65px !important;
-}
-
-.grass-oval {
-  width: 100% !important;
-  height: 100% !important;
-  background: #5CA368 !important;
-  border: 3px solid #2B5733 !important;
-  border-radius: 50% !important;
-}
-
-.battle-unit-enemy .battle-sprite {
-  position: absolute !important;
-  bottom: 15px !important;
-  left: 50% !important;
-  transform: translateX(-50%) !important;
-  max-width: 120px !important;
-  max-height: 120px !important;
-  object-fit: contain !important;
-}
-
-.hud-enemy {
-  position: absolute !important;
-  top: 10px !important;
-  left: 15px !important;
-  width: 240px !important;
-}
-
-/* UNIDAD JUGADOR (ABAJO IZQUIERDA) */
-.battle-unit-player {
-  position: absolute !important;
-  bottom: 15px !important;
-  left: 15px !important;
-  right: 15px !important;
-  height: 160px !important;
-}
-
-.platform-player {
-  position: absolute !important;
-  left: 35px !important;
-  bottom: 0px !important;
-  width: 210px !important;
-  height: 75px !important;
-}
-
-.grass-oval-large {
-  width: 100% !important;
-  height: 100% !important;
-  background: #6CB879 !important;
-  border: 4px solid #2B5733 !important;
-  border-radius: 50% !important;
-}
-
-.battle-unit-player .battle-sprite {
-  position: absolute !important;
-  bottom: 15px !important;
-  left: 50% !important;
-  transform: translateX(-50%) !important;
-  max-width: 140px !important;
-  max-height: 140px !important;
-  object-fit: contain !important;
-}
-
-.hud-player {
-  position: absolute !important;
-  bottom: 10px !important;
-  right: 15px !important;
-  width: 260px !important;
-}
-
-/* CAJAS DE ESTADO (GBA) */
-.pokemon-hud {
-  background: #EAE6D2 !important;
-  border: 3px solid #38342E !important;
-  border-radius: 0px 14px 0px 14px !important;
-  padding: 8px 12px !important;
-  color: #1A1813 !important;
-}
-
-.hud-top {
-  display: flex !important;
-  justify-content: space-between !important;
-  font-weight: 700 !important;
-  font-size: 0.95rem !important;
-}
-
-.hp-gauge-container {
-  display: flex !important;
-  align-items: center !important;
-  gap: 6px !important;
-  background: #3B3831 !important;
-  padding: 3px 6px !important;
-  border-radius: 6px !important;
-  margin: 4px 0 !important;
-}
-
-.hp-tag { color: #FBBF24 !important; font-weight: 900 !important; font-size: 0.75rem !important; }
-
-.hp-bar-bg {
-  flex-grow: 1 !important;
-  height: 8px !important;
-  background: #6B7280 !important;
-  border-radius: 4px !important;
-  overflow: hidden !important;
-}
-
-.hp-bar-fill {
-  height: 100% !important;
-  background: #22C55E !important;
-  transition: width 0.4s ease !important;
-}
-
-.hp-numbers-hud { text-align: right !important; font-size: 0.8rem !important; font-weight: 700 !important; }
-
-.party-balls { display: flex !important; gap: 4px !important; margin-top: 4px !important; }
-.pkball { width: 10px !important; height: 10px !important; border-radius: 50% !important; background: #E11D48 !important; border: 1px solid #000 !important; }
-.pkball.fainted { background: #6B7280 !important; opacity: 0.4 !important; }
-
-/* CUADRO DE DIÁLOGO Y BOTONES */
-.retro-textbox-wrapper {
-  margin-top: 12px !important;
-  background: #2B4546 !important;
-  border: 4px solid #D86B27 !important;
-  border-radius: 8px !important;
-  display: flex !important;
-  min-height: 110px !important;
-}
-
-.retro-dialog-pane {
-  flex: 1.1 !important;
-  padding: 16px !important;
-  color: white !important;
-  font-size: 1.1rem !important;
-  border-right: 4px solid #D86B27 !important;
-  display: flex !important;
-  align-items: center !important;
-}
-
-.retro-controls-pane {
-  flex: 0.9 !important;
-  background: #1D2D2E !important;
-  padding: 10px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-}
-
-.main-command-menu {
-  display: grid !important;
-  grid-template-columns: 1fr 1fr !important;
-  gap: 8px !important;
-  width: 100% !important;
-}
-
-.cmd-btn {
-  border: 3px solid #000 !important;
-  border-radius: 8px !important;
-  padding: 10px !important;
-  font-family: 'Press Start 2P', cursive !important;
-  font-size: 0.72rem !important;
-  color: white !important;
-  cursor: pointer !important;
-}
-.cmd-fight { background: #E0505A !important; }
-.cmd-bag { background: #E58C36 !important; }
-.cmd-poke { background: #43A047 !important; }
-.cmd-run { background: #3B7FB9 !important; }
-
-.moves-grid-sub { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 6px !important; width: 100% !important; }
-.atk-sub-btn { background: #374151 !important; border: 2px solid #1F2937 !important; color: white !important; padding: 6px !important; border-radius: 6px !important; cursor: pointer !important; }
-.cancel-move-btn { width: 100% !important; background: #DC2626 !important; color: white !important; border: 2px solid #000 !important; padding: 6px !important; cursor: pointer !important; margin-top: 6px !important; }
-/* ========================================================
-   ARENA GRANDE CON FONDO DE CUEVA Y MODAL ROGUELIKE
-   ======================================================== */
-.retro-battle-arena {
-  height: 480px !important; /* Pantalla más alta */
-  background: #000 url('bg.png') no-repeat center center !important;
-  background-size: 100% 100% !important;
-  position: relative !important;
-  border: 4px solid #1E293B !important;
-}
-
-/* Ocultar las plataformas verdes viejas */
-.grass-oval, .grass-oval-large { display: none !important; }
-
-/* Posicionar al Rival exactamente sobre el cráter derecho de la foto */
-.platform-enemy {
-  position: absolute !important;
-  right: 14% !important;
-  top: 48% !important;
-  width: 140px !important;
-  height: 140px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-}
-
-.platform-enemy .battle-sprite {
-  max-width: 130px !important;
-  max-height: 130px !important;
-  filter: drop-shadow(0 10px 10px rgba(0,0,0,0.8)) !important;
-}
-
-/* Posicionar al Jugador exactamente sobre el cráter izquierdo de la foto */
-.platform-player {
-  position: absolute !important;
-  left: 16% !important;
-  bottom: 8% !important;
-  width: 170px !important;
-  height: 170px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-}
-
-.platform-player .battle-sprite {
-  max-width: 160px !important;
-  max-height: 160px !important;
-  filter: drop-shadow(0 12px 12px rgba(0,0,0,0.8)) !important;
-}
-
-/* MODAL DE RECOMPENSAS ROGUELIKE */
-.rogue-reward-screen, .bag-screen {
-  position: absolute;
-  inset: 0;
-  background: rgba(5, 7, 12, 0.88);
-  backdrop-filter: blur(4px);
-  z-index: 50;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-}
-
-.reward-card-box, .bag-box {
-  background: #111827;
-  border: 3px solid #F59E0B;
-  border-radius: 12px;
-  padding: 20px;
-  max-width: 550px;
-  width: 100%;
-  text-align: center;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.8);
-}
-
-.reward-title {
-  font-family: 'Press Start 2P', cursive;
-  font-size: 0.95rem;
-  color: #F59E0B;
-  margin-bottom: 8px;
-}
-
-.reward-subtitle {
-  font-size: 0.85rem;
-  color: #94A3B8;
-  margin-bottom: 18px;
-}
-
-.rewards-options {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
-.reward-choice-card {
-  background: #1F2937;
-  border: 2px solid #374151;
-  border-radius: 10px;
-  padding: 12px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-.reward-choice-card:hover {
-  border-color: #10B981;
-  transform: translateY(-3px);
-  background: #283548;
-}
-
-.reward-choice-card img {
-  width: 75px;
-  height: 75px;
-  object-fit: contain;
-  margin: 6px 0;
+  .platform-player { left: 8%; bottom: 5%; width: 130px; height: 130px; }
+  .platform-enemy { right: 8%; top: 44%; width: 110px; height: 110px; }
+  .platform-player .battle-sprite { max-width: 120px; max-height: 120px; }
+  .platform-enemy .battle-sprite { max-width: 100px; max-height: 100px; }
 }
