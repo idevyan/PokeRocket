@@ -272,8 +272,11 @@ function renderMovesButtons() {
 }
 
 // FIX CRÍTICO DEL BUG DE 0 PS: Turno de pelea con corte inmediato
+// Temporizador seguro para animaciones
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+// Combate corregido: resta vida y no se traba
 async function doTowerTurn(moveIdx) {
-  // Si tu Pokémon ya tiene 0 de vida, corta de raíz cualquier acción
   if (battleBusy || playerPokemon.hp <= 0 || enemyPokemon.hp <= 0) return;
 
   battleBusy = true;
@@ -282,35 +285,42 @@ async function doTowerTurn(moveIdx) {
   const pMove = playerPokemon.moves[moveIdx];
   const eMove = enemyPokemon.moves[Math.floor(Math.random() * enemyPokemon.moves.length)];
 
-  if (playerPokemon.spe >= enemyPokemon.spe) {
-    // Ataca el jugador primero
-    await attackStep(playerPokemon, enemyPokemon, pMove, 'p', 'e');
-    // Si el rival sigue vivo, responde
-    if (enemyPokemon.hp > 0) {
-      await sleep(700);
-      await attackStep(enemyPokemon, playerPokemon, eMove, 'e', 'p');
-    }
-  } else {
-    // Ataca el rival primero
-    await attackStep(enemyPokemon, playerPokemon, eMove, 'e', 'p');
-    // Si el jugador sigue vivo tras el golpe, contraataca
-    if (playerPokemon.hp > 0) {
-      await sleep(700);
+  try {
+    if (playerPokemon.spe >= enemyPokemon.spe) {
+      // Atacas tú primero
       await attackStep(playerPokemon, enemyPokemon, pMove, 'p', 'e');
+      if (enemyPokemon.hp > 0) {
+        await sleep(700);
+        await attackStep(enemyPokemon, playerPokemon, eMove, 'e', 'p');
+      }
+    } else {
+      // Ataca el rival primero
+      await attackStep(enemyPokemon, playerPokemon, eMove, 'e', 'p');
+      if (playerPokemon.hp > 0) {
+        await sleep(700);
+        await attackStep(playerPokemon, enemyPokemon, pMove, 'p', 'e');
+      }
     }
+  } catch (error) {
+    console.error("Error en turno:", error);
+  } finally {
+    checkFaintStatus();
   }
-
-  checkFaintStatus();
 }
 
 async function attackStep(atk, def, move, atkSide, defSide) {
   setDialog(`¡${atk.name.toUpperCase()} usó ${move.name.toUpperCase()}!`);
 
+  // Animación de salto de ataque
   const spriteAtk = document.getElementById(`${atkSide}-sprite`);
-  spriteAtk.classList.add(atkSide === 'p' ? 'anim-atk-p' : 'anim-atk-e');
-  setTimeout(() => spriteAtk.classList.remove('anim-atk-p', 'anim-atk-e'), 300);
-  await sleep(350);
+  if (spriteAtk) {
+    spriteAtk.classList.add(atkSide === 'p' ? 'anim-atk-p' : 'anim-atk-e');
+    setTimeout(() => spriteAtk.classList.remove('anim-atk-p', 'anim-atk-e'), 300);
+  }
+  
+  await sleep(400);
 
+  // Cálculo de Daño con multiplicador de tipo
   let mult = 1;
   if (TYPE_CHART[move.type] && TYPE_CHART[move.type][def.types[0]]) {
     mult = TYPE_CHART[move.type][def.types[0]];
@@ -319,19 +329,30 @@ async function attackStep(atk, def, move, atkSide, defSide) {
   const base = Math.floor((((2 * 50 / 5 + 2) * move.power * (atk.atk / def.def)) / 50) + 2);
   const dmg = Math.max(1, Math.floor(base * mult * (Math.random() * 0.15 + 0.85)));
 
-  // FIX: Se limita la vida a 0 exacto sin números negativos
+  // Restar vida y actualizar visualmente la barra
   def.hp = Math.max(0, def.hp - dmg);
-
-  const spriteDef = document.getElementById(`${defSide}-sprite`);
-  spriteDef.classList.add('anim-shake');
-  setTimeout(() => spriteDef.classList.remove('anim-shake'), 350);
-
   updateHpBar(defSide, def);
 
-  if (mult > 1) { playBeep(650, 'square', 0.2); setDialog(`¡Es súper eficaz! Infligió ${dmg} de daño.`); }
-  else if (mult < 1 && mult > 0) { playBeep(200, 'sawtooth', 0.1); setDialog(`No es muy eficaz... Infligió ${dmg} de daño.`); }
-  else { playBeep(200, 'sawtooth', 0.1); setDialog(`Causó ${dmg} de daño.`); }
-  await sleep(650);
+  // Animación de daño en el receptor
+  const spriteDef = document.getElementById(`${defSide}-sprite`);
+  if (spriteDef) {
+    spriteDef.classList.add('anim-shake');
+    setTimeout(() => spriteDef.classList.remove('anim-shake'), 350);
+  }
+
+  // Mensajes de efectividad y sonido
+  if (mult > 1) {
+    playBeep(650, 'square', 0.2);
+    setDialog(`¡Es súper eficaz! Infligió ${dmg} de daño.`);
+  } else if (mult < 1 && mult > 0) {
+    playBeep(200, 'sawtooth', 0.1);
+    setDialog(`No es muy eficaz... Infligió ${dmg} de daño.`);
+  } else {
+    playBeep(200, 'sawtooth', 0.1);
+    setDialog(`Infligió ${dmg} de daño.`);
+  }
+
+  await sleep(700);
 }
 
 // Comprobación estricta de fin de turno
