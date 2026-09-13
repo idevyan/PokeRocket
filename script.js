@@ -71,13 +71,15 @@ if (window.location.hash === '#rogue' || window.location.hash === '#battle') {
 }
 
 // ========================================================
-// MOTOR ROGUELIKE INFINITO (1 SOLO POKÉMON & 3 ELECCIONES)
+// MOTOR ROGUELIKE (EQUIPO PROGRESIVO HASTA 3 POKÉMON)
 // ========================================================
 let towerFloor = 1;
-let playerPokemon = null; // Solo 1 Pokémon activo
+let playerParty = []; // Tu equipo de 1 a 3 Pokémon
+let pActiveIdx = 0;   // Índice del Pokémon que lucha actualmente
 let enemyPokemon = null;
 let battleBusy = false;
-let playerBag = { potions: 2 };
+
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 const TYPE_CHART = {
   fire: { grass: 2, ice: 2, bug: 2, steel: 2, water: 0.5, fire: 0.5, rock: 0.5, dragon: 0.5 },
@@ -87,7 +89,7 @@ const TYPE_CHART = {
   normal: { rock: 0.5, steel: 0.5, ghost: 0 }
 };
 
-// Generar 1 Pokémon con estadísticas escaladas al piso infinito
+// Generar Pokémon con stats escaladas
 async function fetchTowerPokemon(floor = 1) {
   const randId = Math.floor(Math.random() * 1020) + 1;
   const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${randId}`);
@@ -117,12 +119,11 @@ async function fetchTowerPokemon(floor = 1) {
 // Iniciar Partida
 async function initTowerMatch() {
   document.getElementById('rogue-reward-screen').style.display = 'none';
-  document.getElementById('bag-screen').style.display = 'none';
 
-  // Si es la primera partida o reinicio por derrota, damos a elegir entre 3 iniciales
-  if (!playerPokemon || towerFloor === 1) {
+  if (playerParty.length === 0 || towerFloor === 1) {
     towerFloor = 1;
-    playerBag.potions = 2;
+    playerParty = [];
+    pActiveIdx = 0;
     showStarterChoice();
     return;
   }
@@ -130,7 +131,7 @@ async function initTowerMatch() {
   loadNextFloorBattle();
 }
 
-// PANTALLA: ELEGIR ENTRE 3 POKÉMON AL INICIAR
+// SELECCIÓN INICIAL (1 DE 3)
 async function showStarterChoice() {
   setDialog("Generando 3 opciones para tu Pokémon inicial...");
   const modal = document.getElementById('rogue-reward-screen');
@@ -156,7 +157,8 @@ async function showStarterChoice() {
       <span style="font-size:0.7rem; color:#F59E0B; text-transform:uppercase; margin-top:4px;">Tipo: ${poke.types.join('/')}</span>
     `;
     card.onclick = () => {
-      playerPokemon = poke;
+      playerParty = [poke]; // Inicias solo con este
+      pActiveIdx = 0;
       modal.style.display = 'none';
       loadNextFloorBattle();
     };
@@ -164,7 +166,7 @@ async function showStarterChoice() {
   });
 }
 
-// Cargar combate del piso actual
+// Cargar Piso de Combate
 async function loadNextFloorBattle() {
   document.getElementById('tower-floor-txt').innerText = `PISO ${towerFloor} (INFINITO)`;
   document.getElementById('tower-enemy-title').innerText = `CUEVA OSCURA - NIVEL ${towerFloor}`;
@@ -174,6 +176,7 @@ async function loadNextFloorBattle() {
   try {
     enemyPokemon = await fetchTowerPokemon(towerFloor);
     renderField();
+    updateBalls();
     showCommandMenu('main');
     setDialog(`¡Un ${enemyPokemon.name.toUpperCase()} salvaje te ataca en el Piso ${towerFloor}!`);
     battleBusy = false;
@@ -184,11 +187,13 @@ async function loadNextFloorBattle() {
 }
 
 function renderField() {
+  const p = playerParty[pActiveIdx];
+
   // Jugador
-  document.getElementById('p-name').innerText = playerPokemon.name;
-  document.getElementById('p-gender').innerText = playerPokemon.gender;
-  document.getElementById('p-sprite').src = playerPokemon.sprite;
-  updateHpBar('p', playerPokemon);
+  document.getElementById('p-name').innerText = p.name;
+  document.getElementById('p-gender').innerText = p.gender;
+  document.getElementById('p-sprite').src = p.sprite;
+  updateHpBar('p', p);
 
   // Rival
   document.getElementById('e-name').innerText = enemyPokemon.name;
@@ -197,19 +202,33 @@ function renderField() {
   updateHpBar('e', enemyPokemon);
 }
 
+// ACTUALIZACIÓN VISUAL Y NUMÉRICA DE VIDA
 function updateHpBar(side, poke) {
   const pct = Math.max(0, Math.min(100, (poke.hp / poke.maxHp) * 100));
   const bar = document.getElementById(`${side}-hp-bar`);
-  bar.style.width = pct + '%';
-
-  if (side === 'p') {
-    document.getElementById('p-hp-current').innerText = Math.max(0, poke.hp);
-    document.getElementById('p-hp-max').innerText = poke.maxHp;
+  
+  if (bar) {
+    bar.style.width = pct + '%';
+    if (pct > 50) bar.style.backgroundColor = '#22C55E';
+    else if (pct > 20) bar.style.backgroundColor = '#F59E0B';
+    else bar.style.backgroundColor = '#E11D48';
   }
 
-  if (pct > 50) bar.style.backgroundColor = '#22C55E';
-  else if (pct > 20) bar.style.backgroundColor = '#F59E0B';
-  else bar.style.backgroundColor = '#E11D48';
+  const currentTxt = document.getElementById(`${side}-hp-current`);
+  const maxTxt = document.getElementById(`${side}-hp-max`);
+  if (currentTxt && maxTxt) {
+    currentTxt.innerText = Math.max(0, poke.hp);
+    maxTxt.innerText = poke.maxHp;
+  }
+}
+
+function updateBalls() {
+  const pContainer = document.getElementById('p-party-balls');
+  if (pContainer) {
+    pContainer.innerHTML = playerParty.map((p, idx) => 
+      `<div class="pkball ${p.hp <= 0 ? 'fainted' : ''}" title="${p.name}"></div>`
+    ).join('');
+  }
 }
 
 function setDialog(txt) {
@@ -219,50 +238,34 @@ function setDialog(txt) {
 // Menús GBA
 const menuCommands = document.getElementById('menu-commands');
 const menuMoves = document.getElementById('menu-moves');
+const menuParty = document.getElementById('menu-party-switch');
 
 function showCommandMenu(which) {
   menuCommands.style.display = 'none';
   menuMoves.style.display = 'none';
+  menuParty.style.display = 'none';
 
   if (which === 'main') menuCommands.style.display = 'grid';
   if (which === 'moves') { renderMovesButtons(); menuMoves.style.display = 'block'; }
+  if (which === 'party') { renderPartySwitchList(); menuParty.style.display = 'block'; }
 }
 
-document.getElementById('cmd-fight-btn').addEventListener('click', () => { if (!battleBusy && playerPokemon.hp > 0) showCommandMenu('moves'); });
-document.getElementById('cmd-poke-btn').addEventListener('click', () => { setDialog(`Solo tienes a ${playerPokemon.name.toUpperCase()}. ¡No puedes cambiar!`); });
-
-// MOCHILA
-document.getElementById('cmd-bag-btn').addEventListener('click', () => {
-  if (battleBusy || playerPokemon.hp <= 0) return;
-  const bagScreen = document.getElementById('bag-screen');
-  const itemsBox = document.getElementById('bag-items-container');
-  itemsBox.innerHTML = `
-    <div style="background:#1F2937; padding:12px; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
-      <span>🧪 Poción (+70 HP) x${playerBag.potions}</span>
-      <button class="retro-btn" id="use-potion-btn" ${playerBag.potions <= 0 ? 'disabled' : ''}>USAR</button>
-    </div>
-  `;
-  bagScreen.style.display = 'flex';
-
-  document.getElementById('use-potion-btn').onclick = () => {
-    if (playerBag.potions > 0) {
-      playerBag.potions--;
-      playerPokemon.hp = Math.min(playerPokemon.maxHp, playerPokemon.hp + 70);
-      updateHpBar('p', playerPokemon);
-      bagScreen.style.display = 'none';
-      setDialog(`¡${playerPokemon.name.toUpperCase()} recuperó 70 PS!`);
-    }
-  };
+document.getElementById('cmd-fight-btn').addEventListener('click', () => { 
+  if (!battleBusy && playerParty[pActiveIdx].hp > 0) showCommandMenu('moves'); 
 });
 
-document.getElementById('close-bag-btn').addEventListener('click', () => { document.getElementById('bag-screen').style.display = 'none'; });
-document.getElementById('cmd-run-btn').addEventListener('click', () => { setDialog("¡No puedes huir en una cueva Roguelike!"); });
+document.getElementById('cmd-poke-btn').addEventListener('click', () => { 
+  if (!battleBusy) showCommandMenu('party'); 
+});
+
 document.getElementById('cmd-back-move').addEventListener('click', () => showCommandMenu('main'));
+document.getElementById('cmd-back-party').addEventListener('click', () => showCommandMenu('main'));
 
 function renderMovesButtons() {
+  const p = playerParty[pActiveIdx];
   const container = document.getElementById('moves-slots-container');
   container.innerHTML = '';
-  playerPokemon.moves.forEach((m, idx) => {
+  p.moves.forEach((m, idx) => {
     const btn = document.createElement('button');
     btn.className = 'atk-sub-btn';
     btn.innerHTML = `<div class="atk-sub-name">${m.name}</div><div class="atk-sub-meta"><span>POT ${m.power}</span><span>${m.type}</span></div>`;
@@ -271,38 +274,67 @@ function renderMovesButtons() {
   });
 }
 
-// FIX CRÍTICO DEL BUG DE 0 PS: Turno de pelea con corte inmediato
-// Temporizador seguro para animaciones
-const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+// LISTA PARA CAMBIAR DE POKÉMON EN COMBATE
+function renderPartySwitchList() {
+  const container = document.getElementById('party-switch-container');
+  container.innerHTML = '';
 
-// Combate corregido: resta vida y no se traba
+  playerParty.forEach((poke, idx) => {
+    const row = document.createElement('div');
+    row.className = `switch-poke-row ${poke.hp <= 0 ? 'fainted' : ''}`;
+    row.innerHTML = `
+      <span>${idx === pActiveIdx ? '▶ ' : ''}${poke.name.toUpperCase()}</span>
+      <span>${Math.max(0, poke.hp)}/${poke.maxHp} HP</span>
+    `;
+    if (poke.hp > 0 && idx !== pActiveIdx) {
+      row.onclick = () => switchPlayerPokemon(idx);
+    }
+    container.appendChild(row);
+  });
+}
+
+async function switchPlayerPokemon(newIdx) {
+  battleBusy = true;
+  showCommandMenu('main');
+  pActiveIdx = newIdx;
+  setDialog(`¡Adelante ${playerParty[pActiveIdx].name.toUpperCase()}!`);
+  renderField();
+  updateBalls();
+  await sleep(800);
+
+  // El rival contraataca en el turno de cambio
+  const eMove = enemyPokemon.moves[Math.floor(Math.random() * enemyPokemon.moves.length)];
+  await attackStep(enemyPokemon, playerParty[pActiveIdx], eMove, 'e', 'p');
+  checkFaintStatus();
+}
+
+// TURNO DE COMBATE CON DAÑO FUNCIONAL
 async function doTowerTurn(moveIdx) {
-  if (battleBusy || playerPokemon.hp <= 0 || enemyPokemon.hp <= 0) return;
+  const p = playerParty[pActiveIdx];
+  if (battleBusy || p.hp <= 0 || enemyPokemon.hp <= 0) return;
 
   battleBusy = true;
   showCommandMenu('main');
 
-  const pMove = playerPokemon.moves[moveIdx];
+  const pMove = p.moves[moveIdx];
   const eMove = enemyPokemon.moves[Math.floor(Math.random() * enemyPokemon.moves.length)];
 
   try {
-    if (playerPokemon.spe >= enemyPokemon.spe) {
-      // Atacas tú primero
-      await attackStep(playerPokemon, enemyPokemon, pMove, 'p', 'e');
+    if (p.spe >= enemyPokemon.spe) {
+      await attackStep(p, enemyPokemon, pMove, 'p', 'e');
       if (enemyPokemon.hp > 0) {
         await sleep(700);
-        await attackStep(enemyPokemon, playerPokemon, eMove, 'e', 'p');
+        await attackStep(enemyPokemon, p, eMove, 'e', 'p');
       }
     } else {
-      // Ataca el rival primero
-      await attackStep(enemyPokemon, playerPokemon, eMove, 'e', 'p');
-      if (playerPokemon.hp > 0) {
+      await attackStep(enemyPokemon, p, eMove, 'e', 'p');
+      if (p.hp > 0) {
         await sleep(700);
-        await attackStep(playerPokemon, enemyPokemon, pMove, 'p', 'e');
+        await attackStep(p, enemyPokemon, pMove, 'p', 'e');
       }
     }
-  } catch (error) {
-    console.error("Error en turno:", error);
+  } catch (err) {
+    console.error(err);
   } finally {
     checkFaintStatus();
   }
@@ -311,65 +343,65 @@ async function doTowerTurn(moveIdx) {
 async function attackStep(atk, def, move, atkSide, defSide) {
   setDialog(`¡${atk.name.toUpperCase()} usó ${move.name.toUpperCase()}!`);
 
-  // Animación de salto de ataque
   const spriteAtk = document.getElementById(`${atkSide}-sprite`);
   if (spriteAtk) {
     spriteAtk.classList.add(atkSide === 'p' ? 'anim-atk-p' : 'anim-atk-e');
     setTimeout(() => spriteAtk.classList.remove('anim-atk-p', 'anim-atk-e'), 300);
   }
-  
   await sleep(400);
 
-  // Cálculo de Daño con multiplicador de tipo
   let mult = 1;
   if (TYPE_CHART[move.type] && TYPE_CHART[move.type][def.types[0]]) {
     mult = TYPE_CHART[move.type][def.types[0]];
   }
 
+  // FÓRMULA DE DAÑO GARANTIZADO
   const base = Math.floor((((2 * 50 / 5 + 2) * move.power * (atk.atk / def.def)) / 50) + 2);
-  const dmg = Math.max(1, Math.floor(base * mult * (Math.random() * 0.15 + 0.85)));
+  const dmg = Math.max(12, Math.floor(base * mult * (Math.random() * 0.15 + 0.85)));
 
-  // Restar vida y actualizar visualmente la barra
   def.hp = Math.max(0, def.hp - dmg);
   updateHpBar(defSide, def);
 
-  // Animación de daño en el receptor
   const spriteDef = document.getElementById(`${defSide}-sprite`);
   if (spriteDef) {
     spriteDef.classList.add('anim-shake');
     setTimeout(() => spriteDef.classList.remove('anim-shake'), 350);
   }
 
-  // Mensajes de efectividad y sonido
-  if (mult > 1) {
-    playBeep(650, 'square', 0.2);
-    setDialog(`¡Es súper eficaz! Infligió ${dmg} de daño.`);
-  } else if (mult < 1 && mult > 0) {
-    playBeep(200, 'sawtooth', 0.1);
-    setDialog(`No es muy eficaz... Infligió ${dmg} de daño.`);
-  } else {
-    playBeep(200, 'sawtooth', 0.1);
-    setDialog(`Infligió ${dmg} de daño.`);
-  }
-
+  if (mult > 1) { playBeep(650, 'square', 0.2); setDialog(`¡Es súper eficaz! Infligió ${dmg} de daño.`); }
+  else if (mult < 1 && mult > 0) { playBeep(200, 'sawtooth', 0.1); setDialog(`No es muy eficaz... Infligió ${dmg} de daño.`); }
+  else { playBeep(200, 'sawtooth', 0.1); setDialog(`Infligió ${dmg} de daño.`); }
   await sleep(700);
 }
 
-// Comprobación estricta de fin de turno
+// COMPROBAR K.O.
 async function checkFaintStatus() {
-  // 1. SI TU POKÉMON MUERE: Se bloquea y fin de la partida
-  if (playerPokemon.hp <= 0) {
-    battleBusy = true;
+  const p = playerParty[pActiveIdx];
+
+  // Si tu Pokémon activo cae
+  if (p.hp <= 0) {
     playBeep(100, 'sawtooth', 0.4);
-    setDialog(`¡Tu ${playerPokemon.name.toUpperCase()} se debilitó por completo! Fin de la partida.`);
-    await sleep(1000);
-    showGameOverScreen();
+    setDialog(`¡${p.name.toUpperCase()} cayó debilitado!`);
+    updateBalls();
+    await sleep(900);
+
+    // ¿Queda otro en el equipo vivo?
+    const nextAlive = playerParty.findIndex(poke => poke.hp > 0);
+    if (nextAlive !== -1) {
+      pActiveIdx = nextAlive;
+      setDialog(`¡Adelante ${playerParty[pActiveIdx].name.toUpperCase()}!`);
+      renderField();
+      updateBalls();
+      battleBusy = false;
+    } else {
+      // Game Over total
+      showGameOverScreen();
+    }
     return;
   }
 
-  // 2. SI EL RIVAL MUERE: Victoria de piso y 3 opciones
+  // Si el rival cae
   if (enemyPokemon.hp <= 0) {
-    battleBusy = true;
     playVictory();
     setDialog(`¡El ${enemyPokemon.name.toUpperCase()} rival ha sido derrotado!`);
     await sleep(1000);
@@ -380,7 +412,6 @@ async function checkFaintStatus() {
   battleBusy = false;
 }
 
-// PANTALLA GAME OVER (REINICIO TOTAL DE PISOS)
 function showGameOverScreen() {
   const modal = document.getElementById('rogue-reward-screen');
   const title = document.getElementById('reward-modal-title');
@@ -389,12 +420,12 @@ function showGameOverScreen() {
 
   title.innerText = "¡GAME OVER!";
   title.style.color = "#EF4444";
-  sub.innerText = `Has caído en el Piso ${towerFloor}. Al perder, la partida se reinicia desde el Piso 1.`;
+  sub.innerText = `Has caído en el Piso ${towerFloor}. Todo tu equipo sucumbió.`;
 
   container.innerHTML = `
     <div style="grid-column: 1 / -1;">
       <button class="retro-btn" style="background:#E11D48; padding:15px; font-size:0.9rem; width:100%; border:3px solid #000;" onclick="restartEntireGame()">
-        COMENZAR NUEVA PARTIDA (PISO 1)
+        COMENZAR NUEVA EXPEDICIÓN (PISO 1)
       </button>
     </div>
   `;
@@ -402,12 +433,13 @@ function showGameOverScreen() {
 }
 
 window.restartEntireGame = function() {
-  playerPokemon = null;
+  playerParty = [];
+  pActiveIdx = 0;
   towerFloor = 1;
   initTowerMatch();
 };
 
-// PANTALLA: 3 ELECCIONES TRAS DERROTAR AL RIVAL
+// DRAFT DE RECOMPENSAS: SE SUMA AL EQUIPO (HASTA 3)
 async function showVictoryRewardDraft() {
   const modal = document.getElementById('rogue-reward-screen');
   const title = document.getElementById('reward-modal-title');
@@ -416,7 +448,7 @@ async function showVictoryRewardDraft() {
 
   title.innerText = `¡PISO ${towerFloor} SUPERADO!`;
   title.style.color = "#F59E0B";
-  sub.innerText = "Elige 1 de estos 3 Pokémon para cambiar de compañero, o quédate con el tuyo:";
+  sub.innerText = `Elige tu recompensa (Equipo: ${playerParty.length}/3 miembros):`;
   container.innerHTML = "<p>Buscando especímenes...</p>";
   modal.style.display = 'flex';
 
@@ -428,7 +460,6 @@ async function showVictoryRewardDraft() {
 
   container.innerHTML = '';
 
-  // Las 3 elecciones de Pokémon nuevos
   choices.forEach((poke, idx) => {
     const card = document.createElement('div');
     card.className = 'reward-choice-card';
@@ -437,33 +468,58 @@ async function showVictoryRewardDraft() {
       <img src="${poke.sprite}" />
       <strong>${poke.name.toUpperCase()}</strong>
       <span style="font-size:0.75rem; color:#94A3B8;">HP: ${poke.maxHp} | ATK: ${poke.atk}</span>
-      <small style="margin-top:6px; color:#38BDF8;">Cambiar a este</small>
+      <small style="margin-top:6px; color:#38BDF8;">
+        ${playerParty.length < 3 ? '+ Añadir al Equipo' : 'Reemplazar Miembro'}
+      </small>
     `;
     card.onclick = () => {
-      playerPokemon = poke; // Cambias a tu único Pokémon
-      advanceNextFloor();
+      if (playerParty.length < 3) {
+        playerParty.push(poke); // ¡SE AÑADE A TU EQUIPO!
+        advanceNextFloor();
+      } else {
+        showSwapScreen(poke);
+      }
     };
     container.appendChild(card);
   });
 
-  // Opción 4: Conservar el actual y curar vida
-  const keepCard = document.createElement('div');
-  keepCard.className = 'reward-choice-card';
-  keepCard.style.borderColor = '#F59E0B';
-  keepCard.innerHTML = `
-    <span style="color:#F59E0B; font-size:0.75rem; font-weight:700;">CONSERVAR ACTUAL</span>
-    <img src="${playerPokemon.sprite}" />
-    <strong>${playerPokemon.name.toUpperCase()}</strong>
-    <span style="font-size:0.75rem; color:#10B981;">Cura +50% de Vida</span>
-    <small style="margin-top:6px; color:#F59E0B;">+1 Poción de regalo</small>
+  // Opción extra: Conservar y curar a todo el equipo
+  const healCard = document.createElement('div');
+  healCard.className = 'reward-choice-card';
+  healCard.style.borderColor = '#F59E0B';
+  healCard.innerHTML = `
+    <span style="color:#F59E0B; font-size:0.75rem; font-weight:700;">DESCANSAR</span>
+    <div style="font-size:2.5rem; margin:8px 0;">💖</div>
+    <strong>CURAR EQUIPO</strong>
+    <span style="font-size:0.75rem; color:#10B981;">Cura +50% PS a todos</span>
   `;
-  keepCard.onclick = () => {
-    playerPokemon.hp = Math.min(playerPokemon.maxHp, playerPokemon.hp + Math.floor(playerPokemon.maxHp * 0.5));
-    playerBag.potions++;
+  healCard.onclick = () => {
+    playerParty.forEach(p => p.hp = Math.min(p.maxHp, p.hp + Math.floor(p.maxHp * 0.5)));
     advanceNextFloor();
   };
-  container.appendChild(keepCard);
+  container.appendChild(healCard);
 }
+
+function showSwapScreen(newCandidate) {
+  const container = document.getElementById('rewards-options-container');
+  container.innerHTML = `
+    <div style="grid-column: 1 / -1;">
+      <p style="color:#EF4444; font-weight:700; margin-bottom:10px;">¡Tu equipo está lleno (3/3)! Elige a quién soltar:</p>
+      ${playerParty.map((p, i) => `
+        <button class="retro-btn" style="display:block; width:100%; margin-bottom:6px; padding:10px;" onclick="replacePokemon(${i}, '${encodeURIComponent(JSON.stringify(newCandidate))}')">
+          Soltar a ${p.name.toUpperCase()} (HP: ${p.hp}/${p.maxHp})
+        </button>
+      `).join('')}
+      <button class="cancel-move-btn" onclick="advanceNextFloor()" style="margin-top:8px;">Conservar mi equipo actual</button>
+    </div>
+  `;
+}
+
+window.replacePokemon = function(index, candidateJson) {
+  const newPoke = JSON.parse(decodeURIComponent(candidateJson));
+  playerParty[index] = newPoke;
+  advanceNextFloor();
+};
 
 function advanceNextFloor() {
   towerFloor++;
@@ -473,7 +529,7 @@ function advanceNextFloor() {
 document.getElementById('tower-restart-btn').addEventListener('click', restartEntireGame);
 
 // ========================================================
-// GENERADOR DE EQUIPOS (DESCARGA ULTRARRÁPIDA)
+// GENERADOR DE EQUIPOS (ULTRARRÁPIDO)
 // ========================================================
 let teamSlots = Array(6).fill(null).map(() => ({ data: null, locked: false }));
 const GENERATIONS = {
@@ -664,5 +720,4 @@ document.getElementById('theme-toggle').addEventListener('click', () => {
   document.body.setAttribute('data-theme', isDark ? 'dark' : 'light');
 });
 
-// INICIO AUTOMÁTICO
 generateFullTeam();
