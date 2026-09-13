@@ -3,14 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PokéRocket - Team Builder & Torre de Batalla</title>
+  <title>PokéRocket - Roguelike Cave & Team Builder</title>
   
-  <!-- Fuentes Pixel Art de Pokémon -->
+  <!-- Fuentes Pixel Art Oficiales -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600;700&family=Press+Start+2P&display=swap" rel="stylesheet" />
   
-  <link rel="stylesheet" href="style.css?v=2" />
+  <!-- Hoja de Estilos con cache-buster -->
+  <link rel="stylesheet" href="style.css?v=rogue1" />
 </head>
 <body>
 
@@ -21,13 +22,13 @@
         <span class="rocket-r">R</span>
         <div>
           <h1 class="pk-title">PokéRocket</h1>
-          <p class="pk-subtitle">SISTEMA TÁCTICO & TORRE DE BATALLA</p>
+          <p class="pk-subtitle">ROGUELIKE CAVE & TACTICAL BUILDER</p>
         </div>
       </div>
       <div class="top-actions">
         <button class="action-btn" id="nav-mode-btn">
           <svg class="icon" viewBox="0 0 24 24"><polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"/><line x1="13" x2="19" y1="19" y2="13"/><polyline points="14.5 6.5 18 3 21 3 21 6 17.5 9.5"/></svg>
-          <span id="nav-mode-text">Torre Batalla</span>
+          <span id="nav-mode-text">Modo Roguelike</span>
         </button>
         <button class="action-btn" id="mute-toggle">
           <svg class="icon" id="sound-icon" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
@@ -44,10 +45,9 @@
   <main class="container">
 
     <!-- ========================================================
-         VISTA 1: GENERADOR DE EQUIPOS (ULTRARRÁPIDO)
+         VISTA 1: GENERADOR DE EQUIPOS
          ======================================================== -->
     <div class="app-view active" id="view-generator">
-      <!-- RADAR TÁCTICO -->
       <section class="tactical-wrapper">
         <div class="mission-badge">
           <div class="mission-name">
@@ -65,7 +65,7 @@
             <div class="tactical-meta">
               <span class="tactical-title">Poder de Combate</span>
               <span class="tactical-value" id="stat-avg-bst">0 Pts</span>
-              <span class="tactical-sub">Stats promedio del equipo</span>
+              <span class="tactical-sub">Stats promedio</span>
             </div>
           </div>
 
@@ -109,7 +109,6 @@
         </div>
       </section>
 
-      <!-- CONTROLES -->
       <section class="control-panel">
         <div class="panel-header">
           <div class="control-title">
@@ -139,33 +138,32 @@
         </div>
       </section>
 
-      <!-- GRID 6 POKEMON -->
       <section class="team-grid" id="team-container"></section>
     </div>
 
     <!-- ========================================================
-         VISTA 2: TORRE DE BATALLA (3 vs 3) - ESTILO GBA / DS
+         VISTA 2: MODO ROGUELIKE INFINITO (CUEVA OSCURA)
          ======================================================== -->
     <div class="app-view" id="view-battle">
       <div class="tower-wrapper">
-        <!-- BARRA SUPERIOR DE TORRE -->
+        
+        <!-- BARRA SUPERIOR DE PISO -->
         <div class="tower-header-bar">
           <div class="tower-stage-badge">
-            <span class="tower-icon">▲</span>
-            <span id="tower-floor-txt">PISO 1 / 10</span>
+            <span class="tower-icon">▼</span>
+            <span id="tower-floor-txt">PISO 1 (INFINITO)</span>
           </div>
-          <div class="tower-rank-txt" id="tower-enemy-title">RIVAL: RECLUTA ROCKET</div>
+          <div class="tower-rank-txt" id="tower-enemy-title">EXPEDICIÓN EN LA CUEVA</div>
           <div class="tower-action-btns">
-            <button class="retro-btn" id="tower-restart-btn">Reiniciar Torre</button>
+            <button class="retro-btn" id="tower-restart-btn">Reiniciar Partida</button>
             <button class="retro-btn" id="tower-back-btn">Generador</button>
           </div>
         </div>
 
-        <!-- ESCENARIO DE PELEA CLÁSICO -->
-        <!-- ESCENARIO CON LA IMAGEN DE LA CUEVA -->
+        <!-- ESCENARIO CON FONDO DE CUEVA -->
         <div class="retro-battle-arena">
           
-          <!-- ZONA ENEMIGA (En el cráter superior derecho) -->
+          <!-- RIVAL EN EL CRÁTER SUPERIOR DERECHO -->
           <div class="battle-unit-enemy">
             <div class="pokemon-hud hud-enemy">
               <div class="hud-top">
@@ -182,13 +180,12 @@
               <div class="party-balls" id="e-party-balls"></div>
             </div>
 
-            <!-- Sprite Rival sobre el cráter de la cueva -->
             <div class="platform-enemy">
               <img class="battle-sprite" id="e-sprite" src="" alt="Rival" />
             </div>
           </div>
 
-          <!-- ZONA JUGADOR (En el cráter inferior izquierdo) -->
+          <!-- JUGADOR EN EL CRÁTER INFERIOR IZQUIERDO -->
           <div class="battle-unit-player">
             <div class="platform-player">
               <img class="battle-sprite" id="p-sprite" src="" alt="Jugador" />
@@ -213,102 +210,33 @@
             </div>
           </div>
 
-          <!-- OVERLAY DE RECOMPENSA ROGUELIKE (AL GANAR UN PISO) -->
+          <!-- OVERLAY DE RECOMPENSA ROGUELIKE -->
           <div class="rogue-reward-screen" id="rogue-reward-screen" style="display: none;">
             <div class="reward-card-box">
               <h3 class="reward-title">¡PISO COMPLETADO!</h3>
-              <p class="reward-subtitle">Elige tu recompensa para continuar descendiendo:</p>
+              <p class="reward-subtitle">Elige tu botín para continuar descendiendo:</p>
               <div class="rewards-options" id="rewards-options-container"></div>
             </div>
           </div>
 
-          <!-- SUB-MENÚ DE LA BOLSA (ITEMS) -->
+          <!-- MODAL DE LA MOCHILA -->
           <div class="bag-screen" id="bag-screen" style="display: none;">
             <div class="bag-box">
-              <h3 class="reward-title">MOCHILA ROCKET</h3>
+              <h3 class="reward-title">MOCHILA EXPEDICIÓN</h3>
               <div class="bag-items-list" id="bag-items-container"></div>
-              <button class="cancel-move-btn" id="close-bag-btn" style="margin-top: 10px;">CERRAR</button>
-            </div>
-          </div>
-
-        </div>
-          
-          <!-- ZONA ENEMIGA (ARRIBA) -->
-          <div class="battle-unit-enemy">
-            <!-- HUD Enemigo (Estilo Imagen 2 y 3) -->
-            <div class="pokemon-hud hud-enemy">
-              <div class="hud-top">
-                <span class="poke-name-hud" id="e-name">Cargando...</span>
-                <span class="gender-sym" id="e-gender">♂</span>
-                <span class="poke-level-hud">Lv<span id="e-lvl">50</span></span>
-              </div>
-              <div class="hp-gauge-container">
-                <span class="hp-tag">HP</span>
-                <div class="hp-bar-bg">
-                  <div class="hp-bar-fill" id="e-hp-bar"></div>
-                </div>
-              </div>
-              <!-- 3 Pokeballs del rival -->
-              <div class="party-balls" id="e-party-balls">
-                <div class="pkball"></div><div class="pkball"></div><div class="pkball"></div>
-              </div>
-            </div>
-
-            <!-- Plataforma y Sprite del Rival -->
-            <div class="platform-enemy">
-              <div class="grass-oval"></div>
-              <img class="battle-sprite" id="e-sprite" src="" alt="Rival" />
-            </div>
-          </div>
-
-          <!-- ZONA JUGADOR (ABAJO) -->
-          <div class="battle-unit-player">
-            <!-- Plataforma y Sprite del Jugador -->
-            <div class="platform-player">
-              <div class="grass-oval-large"></div>
-              <img class="battle-sprite" id="p-sprite" src="" alt="Jugador" />
-            </div>
-
-            <!-- HUD Jugador (Estilo Imagen 2 y 3) -->
-            <div class="pokemon-hud hud-player">
-              <div class="hud-top">
-                <span class="poke-name-hud" id="p-name">Cargando...</span>
-                <span class="gender-sym" id="p-gender">♀</span>
-                <span class="poke-level-hud">Lv<span id="p-lvl">50</span></span>
-              </div>
-              <div class="hp-gauge-container">
-                <span class="hp-tag">HP</span>
-                <div class="hp-bar-bg">
-                  <div class="hp-bar-fill" id="p-hp-bar"></div>
-                </div>
-              </div>
-              <div class="hp-numbers-hud">
-                <span id="p-hp-current">--</span>/<span id="p-hp-max">--</span>
-              </div>
-              <div class="exp-gauge-container">
-                <span class="exp-tag">EXP</span>
-                <div class="exp-bar-fill"></div>
-              </div>
-              <!-- 3 Pokeballs del jugador -->
-              <div class="party-balls" id="p-party-balls">
-                <div class="pkball"></div><div class="pkball"></div><div class="pkball"></div>
-              </div>
+              <button class="cancel-move-btn" id="close-bag-btn" style="margin-top: 15px;">CERRAR</button>
             </div>
           </div>
 
         </div>
 
-        <!-- CONSOLA DE MENSAJES Y COMANDOS RETRO GBA -->
+        <!-- CONSOLA GBA -->
         <div class="retro-textbox-wrapper">
-          <!-- Cuadro de texto izquierdo -->
           <div class="retro-dialog-pane" id="battle-dialog-txt">
-            ¡Comienza el asalto a la Torre Rocket! ¿Qué hará tu Pokémon?
+            ¡Descendiendo en la cueva! Selecciona una acción.
           </div>
 
-          <!-- Cuadro de controles derecho -->
           <div class="retro-controls-pane">
-            
-            <!-- Menú Principal: FIGHT, BAG, POKEMON, RUN -->
             <div class="main-command-menu" id="menu-commands">
               <button class="cmd-btn cmd-fight" id="cmd-fight-btn">FIGHT</button>
               <button class="cmd-btn cmd-bag" id="cmd-bag-btn">BAG</button>
@@ -316,18 +244,15 @@
               <button class="cmd-btn cmd-run" id="cmd-run-btn">RUN</button>
             </div>
 
-            <!-- Sub-Menú: 4 Ataques -->
             <div class="moves-command-menu" id="menu-moves" style="display: none;">
               <div class="moves-grid-sub" id="moves-slots-container"></div>
               <button class="cancel-move-btn" id="cmd-back-move">VOLVER</button>
             </div>
 
-            <!-- Sub-Menú: Selector de los 3 Pokémon del Equipo -->
             <div class="switch-party-menu" id="menu-party-switch" style="display: none;">
               <div class="party-switch-list" id="party-switch-container"></div>
               <button class="cancel-move-btn" id="cmd-back-party">VOLVER</button>
             </div>
-
           </div>
         </div>
 
@@ -336,7 +261,7 @@
 
   </main>
 
-  <!-- MODAL DETALLES DEL GENERADOR -->
+  <!-- MODAL POKEMON -->
   <div class="modal-backdrop" id="poke-modal">
     <div class="modal-box">
       <button class="modal-close" id="modal-close-btn">
@@ -363,13 +288,11 @@
     </div>
   </div>
 
-  <!-- TOAST -->
   <div class="toast" id="toast">
     <svg class="icon" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
     <span id="toast-msg">Reporte copiado con éxito.</span>
   </div>
 
-  <!-- LOADING SPINNER -->
   <div class="loading-overlay" id="loading">
     <div class="pokeball-spinner"></div>
     <div class="loading-text">DESPLEGANDO ESCUADRÓN ROCKET...</div>
