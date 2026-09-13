@@ -3,12 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PokéRocket - Team Builder & Battle Arena</title>
+  <title>PokéRocket - Team Builder & Torre de Batalla</title>
   
-  <!-- Fuentes -->
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <!-- Fuentes Pixel Art de Pokémon -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600;700&family=Press+Start+2P&display=swap" rel="stylesheet" />
   
-  <!-- Hoja de estilos -->
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -20,13 +21,13 @@
         <span class="rocket-r">R</span>
         <div>
           <h1 class="pk-title">PokéRocket</h1>
-          <p class="pk-subtitle">SISTEMA TÁCTICO ULTRARRÁPIDO • GEN 1 - 9</p>
+          <p class="pk-subtitle">SISTEMA TÁCTICO & TORRE DE BATALLA</p>
         </div>
       </div>
       <div class="top-actions">
-        <button class="action-btn" id="nav-battle-btn">
+        <button class="action-btn" id="nav-mode-btn">
           <svg class="icon" viewBox="0 0 24 24"><polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"/><line x1="13" x2="19" y1="19" y2="13"/><polyline points="14.5 6.5 18 3 21 3 21 6 17.5 9.5"/></svg>
-          <span id="nav-mode-text">Arena Battle</span>
+          <span id="nav-mode-text">Torre Batalla</span>
         </button>
         <button class="action-btn" id="mute-toggle">
           <svg class="icon" id="sound-icon" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
@@ -40,15 +41,11 @@
     </div>
   </header>
 
-  <!-- PESTAÑA LATERAL -->
-  <button class="battle-launcher-btn" id="battle-launcher-tab" title="Entrar a la Arena">
-    <svg class="icon" viewBox="0 0 24 24"><polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"/><line x1="13" x2="19" y1="19" y2="13"/><polyline points="14.5 6.5 18 3 21 3 21 6 17.5 9.5"/></svg>
-    <span class="battle-launcher-text">POKÉ BATTLE</span>
-  </button>
-
   <main class="container">
 
-    <!-- VISTA 1: GENERADOR DE EQUIPOS -->
+    <!-- ========================================================
+         VISTA 1: GENERADOR DE EQUIPOS (ULTRARRÁPIDO)
+         ======================================================== -->
     <div class="app-view active" id="view-generator">
       <!-- RADAR TÁCTICO -->
       <section class="tactical-wrapper">
@@ -68,7 +65,7 @@
             <div class="tactical-meta">
               <span class="tactical-title">Poder de Combate</span>
               <span class="tactical-value" id="stat-avg-bst">0 Pts</span>
-              <span class="tactical-sub">Estadísticas promedio</span>
+              <span class="tactical-sub">Stats promedio del equipo</span>
             </div>
           </div>
 
@@ -117,7 +114,7 @@
         <div class="panel-header">
           <div class="control-title">
             <svg class="icon" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-            Generaciones Permitidas:
+            Generaciones:
           </div>
           <div class="extra-toggles">
             <label class="toggle-chip" id="shiny-chip">
@@ -142,71 +139,135 @@
         </div>
       </section>
 
-      <!-- GRID -->
+      <!-- GRID 6 POKEMON -->
       <section class="team-grid" id="team-container"></section>
     </div>
 
-    <!-- VISTA 2: ARENA DE COMBATE -->
+    <!-- ========================================================
+         VISTA 2: TORRE DE BATALLA (3 vs 3) - ESTILO GBA / DS
+         ======================================================== -->
     <div class="app-view" id="view-battle">
-      <div class="battle-view-wrapper">
-        <div class="battle-nav-bar">
-          <button class="back-btn" id="back-to-gen-btn">
-            <svg class="icon" viewBox="0 0 24 24"><line x1="19" x2="5" y1="12" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-            Volver al Generador
-          </button>
-          <button class="action-btn" id="battle-duel-reload">
-            <svg class="icon" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-            Nuevo Duelo Random
-          </button>
-        </div>
-
-        <div class="battle-stage">
-          <!-- RIVAL -->
-          <div class="fighter-zone zone-enemy">
-            <div class="sprite-box">
-              <img class="sprite-img" id="b-img-enemy" src="" alt="Rival" />
-            </div>
-            <div class="hud-box">
-              <div class="hud-row">
-                <span class="poke-title" id="b-name-enemy">Cargando...</span>
-                <span class="poke-lvl">Nv.50</span>
-              </div>
-              <div class="hp-outer">
-                <div class="hp-inner" id="b-bar-enemy"></div>
-              </div>
-              <div class="hp-num" id="b-txt-enemy">-- / --</div>
-            </div>
+      <div class="tower-wrapper">
+        <!-- BARRA SUPERIOR DE TORRE -->
+        <div class="tower-header-bar">
+          <div class="tower-stage-badge">
+            <span class="tower-icon">▲</span>
+            <span id="tower-floor-txt">PISO 1 / 10</span>
           </div>
-
-          <!-- JUGADOR -->
-          <div class="fighter-zone zone-player">
-            <div class="sprite-box">
-              <img class="sprite-img" id="b-img-player" src="" alt="Jugador" />
-            </div>
-            <div class="hud-box">
-              <div class="hud-row">
-                <span class="poke-title" id="b-name-player">Cargando...</span>
-                <span class="poke-lvl">Nv.50</span>
-              </div>
-              <div class="hp-outer">
-                <div class="hp-inner" id="b-bar-player"></div>
-              </div>
-              <div class="hp-num" id="b-txt-player">-- / --</div>
-            </div>
+          <div class="tower-rank-txt" id="tower-enemy-title">RIVAL: RECLUTA ROCKET</div>
+          <div class="tower-action-btns">
+            <button class="retro-btn" id="tower-restart-btn">Reiniciar Torre</button>
+            <button class="retro-btn" id="tower-back-btn">Generador</button>
           </div>
         </div>
 
-        <div class="console-box" id="b-console">
-          ¡Elige un ataque para golpear primero!
+        <!-- ESCENARIO DE PELEA CLÁSICO -->
+        <div class="retro-battle-arena">
+          
+          <!-- ZONA ENEMIGA (ARRIBA) -->
+          <div class="battle-unit-enemy">
+            <!-- HUD Enemigo (Estilo Imagen 2 y 3) -->
+            <div class="pokemon-hud hud-enemy">
+              <div class="hud-top">
+                <span class="poke-name-hud" id="e-name">Cargando...</span>
+                <span class="gender-sym" id="e-gender">♂</span>
+                <span class="poke-level-hud">Lv<span id="e-lvl">50</span></span>
+              </div>
+              <div class="hp-gauge-container">
+                <span class="hp-tag">HP</span>
+                <div class="hp-bar-bg">
+                  <div class="hp-bar-fill" id="e-hp-bar"></div>
+                </div>
+              </div>
+              <!-- 3 Pokeballs del rival -->
+              <div class="party-balls" id="e-party-balls">
+                <div class="pkball"></div><div class="pkball"></div><div class="pkball"></div>
+              </div>
+            </div>
+
+            <!-- Plataforma y Sprite del Rival -->
+            <div class="platform-enemy">
+              <div class="grass-oval"></div>
+              <img class="battle-sprite" id="e-sprite" src="" alt="Rival" />
+            </div>
+          </div>
+
+          <!-- ZONA JUGADOR (ABAJO) -->
+          <div class="battle-unit-player">
+            <!-- Plataforma y Sprite del Jugador -->
+            <div class="platform-player">
+              <div class="grass-oval-large"></div>
+              <img class="battle-sprite" id="p-sprite" src="" alt="Jugador" />
+            </div>
+
+            <!-- HUD Jugador (Estilo Imagen 2 y 3) -->
+            <div class="pokemon-hud hud-player">
+              <div class="hud-top">
+                <span class="poke-name-hud" id="p-name">Cargando...</span>
+                <span class="gender-sym" id="p-gender">♀</span>
+                <span class="poke-level-hud">Lv<span id="p-lvl">50</span></span>
+              </div>
+              <div class="hp-gauge-container">
+                <span class="hp-tag">HP</span>
+                <div class="hp-bar-bg">
+                  <div class="hp-bar-fill" id="p-hp-bar"></div>
+                </div>
+              </div>
+              <div class="hp-numbers-hud">
+                <span id="p-hp-current">--</span>/<span id="p-hp-max">--</span>
+              </div>
+              <div class="exp-gauge-container">
+                <span class="exp-tag">EXP</span>
+                <div class="exp-bar-fill"></div>
+              </div>
+              <!-- 3 Pokeballs del jugador -->
+              <div class="party-balls" id="p-party-balls">
+                <div class="pkball"></div><div class="pkball"></div><div class="pkball"></div>
+              </div>
+            </div>
+          </div>
+
         </div>
 
-        <div class="attacks-grid" id="b-attacks-grid"></div>
+        <!-- CONSOLA DE MENSAJES Y COMANDOS RETRO GBA -->
+        <div class="retro-textbox-wrapper">
+          <!-- Cuadro de texto izquierdo -->
+          <div class="retro-dialog-pane" id="battle-dialog-txt">
+            ¡Comienza el asalto a la Torre Rocket! ¿Qué hará tu Pokémon?
+          </div>
+
+          <!-- Cuadro de controles derecho -->
+          <div class="retro-controls-pane">
+            
+            <!-- Menú Principal: FIGHT, BAG, POKEMON, RUN -->
+            <div class="main-command-menu" id="menu-commands">
+              <button class="cmd-btn cmd-fight" id="cmd-fight-btn">FIGHT</button>
+              <button class="cmd-btn cmd-bag" id="cmd-bag-btn">BAG</button>
+              <button class="cmd-btn cmd-poke" id="cmd-poke-btn">POKéMON</button>
+              <button class="cmd-btn cmd-run" id="cmd-run-btn">RUN</button>
+            </div>
+
+            <!-- Sub-Menú: 4 Ataques -->
+            <div class="moves-command-menu" id="menu-moves" style="display: none;">
+              <div class="moves-grid-sub" id="moves-slots-container"></div>
+              <button class="cancel-move-btn" id="cmd-back-move">VOLVER</button>
+            </div>
+
+            <!-- Sub-Menú: Selector de los 3 Pokémon del Equipo -->
+            <div class="switch-party-menu" id="menu-party-switch" style="display: none;">
+              <div class="party-switch-list" id="party-switch-container"></div>
+              <button class="cancel-move-btn" id="cmd-back-party">VOLVER</button>
+            </div>
+
+          </div>
+        </div>
+
       </div>
     </div>
 
   </main>
 
-  <!-- MODAL DE DETALLES -->
+  <!-- MODAL DETALLES DEL GENERADOR -->
   <div class="modal-backdrop" id="poke-modal">
     <div class="modal-box">
       <button class="modal-close" id="modal-close-btn">
@@ -233,11 +294,13 @@
     </div>
   </div>
 
+  <!-- TOAST -->
   <div class="toast" id="toast">
     <svg class="icon" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
     <span id="toast-msg">Reporte copiado con éxito.</span>
   </div>
 
+  <!-- LOADING SPINNER -->
   <div class="loading-overlay" id="loading">
     <div class="pokeball-spinner"></div>
     <div class="loading-text">DESPLEGANDO ESCUADRÓN ROCKET...</div>
