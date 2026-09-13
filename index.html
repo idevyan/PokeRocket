@@ -3,12 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PokéRocket - Roguelike Cave & Team Builder</title>
+  <title>PokéRocket - Tactical Builder, Roguelike & Gacha</title>
   
+  <!-- Nueva Fuente Pixel Art Silkscreen -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600;700&family=Press+Start+2P&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css?v=fixFinal" />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Silkscreen:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css?v=gachaFinal" />
 </head>
 <body>
 
@@ -19,21 +20,28 @@
         <span class="rocket-r">R</span>
         <div>
           <h1 class="pk-title">PokéRocket</h1>
-          <p class="pk-subtitle">ROGUELIKE CAVE & TACTICAL BUILDER</p>
+          <p class="pk-subtitle">SISTEMA TÁCTICO • ROGUELIKE • GACHA</p>
         </div>
       </div>
       <div class="top-actions">
-        <button class="action-btn" id="nav-mode-btn">
+        <!-- BOTONES DE NAVEGACIÓN -->
+        <button class="action-btn active" id="btn-tab-gen">
+          <svg class="icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          <span>Generador</span>
+        </button>
+        <button class="action-btn" id="btn-tab-rogue">
           <svg class="icon" viewBox="0 0 24 24"><polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"/><line x1="13" x2="19" y1="19" y2="13"/><polyline points="14.5 6.5 18 3 21 3 21 6 17.5 9.5"/></svg>
-          <span id="nav-mode-text">Modo Roguelike</span>
+          <span>Roguelike</span>
         </button>
-        <button class="action-btn" id="mute-toggle">
+        <button class="action-btn" id="btn-tab-gacha">
+          <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 10 10H2A10 10 0 0 1 12 2z"/><circle cx="12" cy="12" r="3"/></svg>
+          <span>Gacha Rocket</span>
+        </button>
+        <button class="action-btn icon-only" id="mute-toggle" title="Silenciar / Activar Sonido">
           <svg class="icon" id="sound-icon" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
-          <span id="sound-text">Audio</span>
         </button>
-        <button class="action-btn" id="theme-toggle">
+        <button class="action-btn icon-only" id="theme-toggle" title="Cambiar Tema">
           <svg class="icon" id="theme-icon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-          <span id="theme-text">Tema</span>
         </button>
       </div>
     </div>
@@ -41,7 +49,9 @@
 
   <main class="container">
 
-    <!-- VISTA 1: GENERADOR DE EQUIPOS -->
+    <!-- ========================================================
+         VISTA 1: GENERADOR DE EQUIPOS
+         ======================================================== -->
     <div class="app-view active" id="view-generator">
       <section class="tactical-wrapper">
         <div class="mission-badge">
@@ -60,7 +70,7 @@
             <div class="tactical-meta">
               <span class="tactical-title">Poder de Combate</span>
               <span class="tactical-value" id="stat-avg-bst">0 Pts</span>
-              <span class="tactical-sub">Stats promedio</span>
+              <span class="tactical-sub">Promedio base</span>
             </div>
           </div>
 
@@ -71,7 +81,7 @@
             <div class="tactical-meta">
               <span class="tactical-title">Más Veloz</span>
               <span class="tactical-value" id="stat-speedster">-</span>
-              <span class="tactical-sub" id="stat-speedster-val">0 Velocidad</span>
+              <span class="tactical-sub" id="stat-speedster-val">0 SPD</span>
             </div>
           </div>
 
@@ -82,7 +92,7 @@
             <div class="tactical-meta">
               <span class="tactical-title">Mayor Ataque</span>
               <span class="tactical-value" id="stat-mvp">-</span>
-              <span class="tactical-sub" id="stat-mvp-val">0 Potencia</span>
+              <span class="tactical-sub" id="stat-mvp-val">0 ATK</span>
             </div>
           </div>
 
@@ -93,7 +103,7 @@
             <div class="tactical-meta">
               <span class="tactical-title">Muralla / Tanque</span>
               <span class="tactical-value" id="stat-tank">-</span>
-              <span class="tactical-sub" id="stat-tank-val">0 Defensa</span>
+              <span class="tactical-sub" id="stat-tank-val">0 DEF</span>
             </div>
           </div>
         </div>
@@ -136,10 +146,11 @@
       <section class="team-grid" id="team-container"></section>
     </div>
 
-    <!-- VISTA 2: ARENA ROGUELIKE INFINITA -->
+    <!-- ========================================================
+         VISTA 2: MODO ROGUELIKE INFINITO (CON MUERTE PERMANENTE)
+         ======================================================== -->
     <div class="app-view" id="view-battle">
       <div class="tower-wrapper">
-        
         <div class="tower-header-bar">
           <div class="tower-stage-badge">
             <span class="tower-icon">▼</span>
@@ -148,25 +159,22 @@
           <div class="tower-rank-txt" id="tower-enemy-title">CUEVA OSCURA</div>
           <div class="tower-action-btns">
             <button class="retro-btn" id="tower-restart-btn">Reiniciar Partida</button>
-            <button class="retro-btn" id="tower-back-btn">Generador</button>
           </div>
         </div>
 
-        <!-- ESCENARIO CON FONDO DE CUEVA -->
         <div class="retro-battle-arena">
-          
           <!-- RIVAL EN CRÁTER DERECHO -->
           <div class="battle-unit-enemy">
             <div class="pokemon-hud hud-enemy">
               <div class="hud-top">
                 <span class="poke-name-hud" id="e-name">Cargando...</span>
                 <span class="gender-sym" id="e-gender">♂</span>
-                <span class="poke-level-hud">Lv<span id="e-lvl">50</span></span>
+                <span class="poke-level-hud">Nv.<span id="e-lvl">50</span></span>
               </div>
               <div class="hp-gauge-container">
-                <span class="hp-tag">HP</span>
+                <span class="hp-tag">PS</span>
                 <div class="hp-bar-bg">
-                  <div class="hp-bar-fill" id="e-hp-bar" style="width: 100%;"></div>
+                  <div class="hp-bar-fill" id="e-hp-bar"></div>
                 </div>
               </div>
               <div class="hp-numbers-hud">
@@ -189,12 +197,12 @@
               <div class="hud-top">
                 <span class="poke-name-hud" id="p-name">Cargando...</span>
                 <span class="gender-sym" id="p-gender">♀</span>
-                <span class="poke-level-hud">Lv<span id="p-lvl">50</span></span>
+                <span class="poke-level-hud">Nv.<span id="p-lvl">50</span></span>
               </div>
               <div class="hp-gauge-container">
-                <span class="hp-tag">HP</span>
+                <span class="hp-tag">PS</span>
                 <div class="hp-bar-bg">
-                  <div class="hp-bar-fill" id="p-hp-bar" style="width: 100%;"></div>
+                  <div class="hp-bar-fill" id="p-hp-bar"></div>
                 </div>
               </div>
               <div class="hp-numbers-hud">
@@ -204,18 +212,16 @@
             </div>
           </div>
 
-          <!-- OVERLAY DE ELECCIÓN / RECOMPENSAS / GAME OVER -->
+          <!-- OVERLAY DE RECOMPENSA / GAME OVER -->
           <div class="rogue-reward-screen" id="rogue-reward-screen" style="display: none;">
             <div class="reward-card-box">
-              <h3 class="reward-title" id="reward-modal-title">¡PISO COMPLETADO!</h3>
-              <p class="reward-subtitle" id="reward-modal-sub">Elige tu opción:</p>
+              <h3 class="reward-title" id="reward-modal-title">¡PISO SUPERADO!</h3>
+              <p class="reward-subtitle" id="reward-modal-sub">Elige tu recompensa:</p>
               <div class="rewards-options" id="rewards-options-container"></div>
             </div>
           </div>
-
         </div>
 
-        <!-- CONSOLA GBA CON BOTÓN FIGHT Y POKÉMON -->
         <div class="retro-textbox-wrapper">
           <div class="retro-dialog-pane" id="battle-dialog-txt">
             ¡Descendiendo en la cueva! Selecciona una acción.
@@ -223,8 +229,8 @@
 
           <div class="retro-controls-pane">
             <div class="main-command-menu" id="menu-commands">
-              <button class="cmd-btn cmd-fight" id="cmd-fight-btn">FIGHT</button>
-              <button class="cmd-btn cmd-poke" id="cmd-poke-btn">POKéMON</button>
+              <button class="cmd-btn cmd-fight" id="cmd-fight-btn">LUCHA</button>
+              <button class="cmd-btn cmd-poke" id="cmd-poke-btn">EQUIPO</button>
             </div>
 
             <div class="moves-command-menu" id="menu-moves" style="display: none;">
@@ -238,7 +244,50 @@
             </div>
           </div>
         </div>
+      </div>
+    </div>
 
+    <!-- ========================================================
+         VISTA 3: GACHA POKÉMON ROCKET (NUEVA SECCIÓN)
+         ======================================================== -->
+    <div class="app-view" id="view-gacha">
+      <div class="gacha-wrapper">
+        <div class="gacha-header-box">
+          <h2 class="gacha-main-title">
+            <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 10 10H2A10 10 0 0 1 12 2z"/><circle cx="12" cy="12" r="3"/></svg>
+            MÁQUINA GACHA ROCKET
+          </h2>
+          <p class="gacha-sub">Extrae especímenes de la red de laboratorios del Team Rocket.</p>
+          <div class="gacha-rates-badge">
+            <span>Común: 60%</span> | <span>Raro: 28%</span> | <span style="color:var(--accent-blue);">Épico: 9%</span> | <span style="color:var(--accent-yellow);">Legendario: 3%</span>
+          </div>
+        </div>
+
+        <div class="gacha-machine-stage">
+          <div class="gacha-orb" id="gacha-visual-orb">
+            <div class="orb-ring"></div>
+            <div class="orb-core">R</div>
+          </div>
+        </div>
+
+        <div class="gacha-actions-bar">
+          <button class="btn-gacha-pull" id="btn-pull-1">
+            <svg class="icon" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            Tirada x1
+          </button>
+          <button class="btn-gacha-pull multi" id="btn-pull-10">
+            <svg class="icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            Tirada x10 (Garantizado Raro+)
+          </button>
+        </div>
+
+        <!-- HISTORIAL DE OBTENIDOS -->
+        <div class="gacha-history-section">
+          <h3 class="gacha-history-title">Colección de Invocaciones Recientes:</h3>
+          <div class="gacha-cards-grid" id="gacha-results-grid">
+            <div class="empty-gacha-text">Aún no has invocado Pokémon. ¡Haz una tirada!</div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -271,11 +320,13 @@
     </div>
   </div>
 
+  <!-- TOAST -->
   <div class="toast" id="toast">
     <svg class="icon" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
     <span id="toast-msg">Reporte copiado con éxito.</span>
   </div>
 
+  <!-- LOADING SPINNER -->
   <div class="loading-overlay" id="loading">
     <div class="pokeball-spinner"></div>
     <div class="loading-text">DESPLEGANDO ESCUADRÓN ROCKET...</div>
